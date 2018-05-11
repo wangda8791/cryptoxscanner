@@ -39,22 +39,6 @@ interface Trade {
     buyerMaker: boolean;
 }
 
-interface Ticker {
-    timestamp: Date;
-    lastPrice: number;
-    bid: number;
-    ask: number;
-}
-
-function rawTickerToTicker(raw): Ticker {
-    return {
-        timestamp: new Date(raw.E),
-        lastPrice: +raw.c,
-        bid: +raw.b,
-        ask: +raw.a,
-    };
-}
-
 class CandleStickChart {
 
     private chart: any = null;
@@ -246,13 +230,21 @@ class PriceChart {
         });
     }
 
-    public update(ticker: Ticker) {
+    public update(priceUpdate: { timestamp: Date, price: number }) {
         this.data.push([
-            ticker.timestamp.getTime(),
-            ticker.lastPrice,
+            priceUpdate.timestamp.getTime(),
+            priceUpdate.price,
         ]);
-        while (this.data.length > this.maxPoints) {
-            this.data.shift();
+
+        const now = new Date().getTime();
+        while (this.data.length > 0) {
+            const age = now - this.data[0][0];
+            if (age > 60000) {
+                console.log(age);
+                this.data.shift();
+            } else {
+                break;
+            }
         }
 
         const series = this.chart.series[0];
@@ -724,6 +716,11 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
                     }
                     if (message.symbol) {
                         this.lastUpdate = message;
+                        this.lastPrice = message.close;
+                        this.priceChart.update({
+                            timestamp: new Date(message.timestamp),
+                            price: message.close,
+                        });
                     }
                 }, (error) => {
                     // Error.
@@ -752,29 +749,28 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         const symbolLower = this.symbol.toLowerCase();
         const streams = [
             `${symbolLower}@aggTrade`,
-            `${symbolLower}@ticker`,
         ];
 
         if (this.useHighStocksCandleChart) {
             const klineStreams = [
-                `${symbolLower}@kline_1m/`,
-                `${symbolLower}@kline_3m/`,
-                `${symbolLower}@kline_5m/`,
-                `${symbolLower}@kline_15m/`,
-                `${symbolLower}@kline_30m/`,
-                `${symbolLower}@kline_1h/`,
-                `${symbolLower}@kline_2h/`,
-                `${symbolLower}@kline_4h/`,
-                `${symbolLower}@kline_6h/`,
-                `${symbolLower}@kline_8h/`,
-                `${symbolLower}@kline_12h/`,
-                `${symbolLower}@kline_1d/`,
+                `${symbolLower}@kline_1m`,
+                `${symbolLower}@kline_3m`,
+                `${symbolLower}@kline_5m`,
+                `${symbolLower}@kline_15m`,
+                `${symbolLower}@kline_30m`,
+                `${symbolLower}@kline_1h`,
+                `${symbolLower}@kline_2h`,
+                `${symbolLower}@kline_4h`,
+                `${symbolLower}@kline_6h`,
+                `${symbolLower}@kline_8h`,
+                `${symbolLower}@kline_12h`,
+                `${symbolLower}@kline_1d`,
             ];
             streams.push(...klineStreams);
         }
 
         const url = `wss://stream.binance.com:9443/stream?streams=` +
-                streams.join("/");
+                streams.join("/") + "/";
 
         const ws = new WebSocket(url);
 
@@ -814,16 +810,11 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
                     }
                     this.lastKline = kline;
                 }
-            } else if (data.stream.indexOf("@trade") > -1) {
-                const trade = this.rawToTrade(data.data);
-                this.addTrade(trade);
             } else if (data.stream.indexOf("@aggTrade") > -1) {
                 const trade = this.rawToTrade(data.data);
                 this.addTrade(trade);
-            } else if (data.stream.indexOf("@ticker") > -1) {
-                const ticker = rawTickerToTicker(data.data);
-                this.priceChart.update(ticker);
-                this.lastPrice = ticker.lastPrice;
+            } else {
+                console.log("Unhandled Binance stream message type: " + data.stream);
             }
 
         };
