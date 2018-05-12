@@ -79,6 +79,7 @@ func (p *ApiProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Printf("error: %v", err)
 		return
 	}
+	defer proxyResponse.Body.Close()
 
 	w.Header().Add("content-type", proxyResponse.Header.Get("content-type"))
 	w.Header().Add("access-control-allow-origin", "*")
