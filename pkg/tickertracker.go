@@ -40,13 +40,13 @@ type TickerMetrics struct {
 
 type TickerTracker struct {
 	Symbol     string
-	Ticks      []CommonTicker
+	Ticks      []*CommonTicker
 	Metrics    map[int]*TickerMetrics
 	LastUpdate time.Time
 	H24Metrics TickerMetrics
 
 	// Trades, in Binance format.
-	Trades []binance.AggTrade
+	Trades []*binance.AggTrade
 
 	HaveVwap        bool
 	HaveTotalVolume bool
@@ -71,8 +71,8 @@ func init() {
 func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
-		Ticks:   []CommonTicker{},
-		Trades:  []binance.AggTrade{},
+		Ticks:   []*CommonTicker{},
+		Trades:  []*binance.AggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 	}
 
@@ -87,7 +87,7 @@ func (t *TickerTracker) LastTick() *CommonTicker {
 	if len(t.Ticks) == 0 {
 		return nil
 	}
-	return &t.Ticks[len(t.Ticks)-1]
+	return t.Ticks[len(t.Ticks)-1]
 }
 
 func (t *TickerTracker) Recalculate() {
@@ -135,7 +135,11 @@ func (t *TickerTracker) Recalculate() {
 		metrics.High = high
 		metrics.Low = low
 		metrics.Range = Round8(high - low)
-		metrics.RangePercent = Round3(metrics.Range / low * 100)
+		if low == 0 {
+			metrics.RangePercent = 0
+		} else {
+			metrics.RangePercent = Round3(metrics.Range / low * 100)
+		}
 	}
 
 	// Some 24 hour metrics.
@@ -161,13 +165,17 @@ func (t *TickerTracker) Recalculate() {
 		}
 
 		metrics := t.Metrics[bucket];
-		priceDiff := lastTick.LastPrice - tick.LastPrice
-		priceDiffPct := Round3(priceDiff / tick.LastPrice * 100)
-		metrics.PriceChangePercent = priceDiffPct
+		if tick.LastPrice > 0 {
+			priceDiff := lastTick.LastPrice - tick.LastPrice
+			priceDiffPct := Round3(priceDiff / tick.LastPrice * 100)
+			metrics.PriceChangePercent = priceDiffPct
+		}
 
 		volumeDiff := lastTick.QuoteVolume - tick.QuoteVolume
-		volumeDiffPct := Round3((volumeDiff / tick.QuoteVolume) * 100)
-		metrics.VolumeChangePercent = volumeDiffPct
+		if tick.QuoteVolume > 0 {
+			volumeDiffPct := Round3((volumeDiff / tick.QuoteVolume) * 100)
+			metrics.VolumeChangePercent = volumeDiffPct
+		}
 
 		nextBucket = bucket - 1
 	}
@@ -230,7 +238,7 @@ func (t *TickerTracker) Recalculate() {
 
 func (t *TickerTracker) Update(ticker CommonTicker) {
 	t.LastUpdate = time.Now()
-	t.Ticks = append(t.Ticks, ticker)
+	t.Ticks = append(t.Ticks, &ticker)
 	now := ticker.Timestamp
 	for {
 		first := t.Ticks[0]
@@ -255,7 +263,7 @@ func (t *TickerTracker) AddTrade(trade binance.AggTrade) {
 		}
 	}
 
-	t.Trades = append(t.Trades, trade)
+	t.Trades = append(t.Trades, &trade)
 }
 
 func (t *TickerTracker) PruneTrades(now time.Time) {
@@ -304,6 +312,7 @@ func Round8(val float64) float64 {
 	out := math.Round(val*100000000) / 100000000
 	if math.IsInf(out, 0) {
 		log.Printf("error: round8 output value IsInf\n")
+		return 0
 	}
 	return out
 }
@@ -312,6 +321,7 @@ func Round3(val float64) float64 {
 	out := math.Round(val*1000) / 1000
 	if math.IsInf(out, 0) {
 		log.Printf("error: round3 output value IsInf\n")
+		return 0
 	}
 	return out
 }

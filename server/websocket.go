@@ -76,7 +76,9 @@ type WebSocketClient struct {
 	r *http.Request
 
 	// Data written into this Channel will be sent to the client.
-	sendChannel chan []byte
+	sendChannel chan *websocket.PreparedMessage
+
+	blocks int
 
 	done bool
 }
@@ -84,8 +86,10 @@ type WebSocketClient struct {
 func NewWebSocketClient(c *websocket.Conn, r *http.Request) *WebSocketClient {
 	return &WebSocketClient{
 		conn:        c,
-		sendChannel: make(chan []byte),
+		sendChannel: make(chan *websocket.PreparedMessage),
 		r:           r,
+		blocks:      0,
+		done:        false,
 	}
 }
 
@@ -174,6 +178,9 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		channel := h.Feed.Subscribe(symbol)
 		defer h.Feed.Unsubscribe(symbol, channel)
 		for {
+			if client.done {
+				break
+			}
 			select {
 			case filteredMessage := <-channel:
 				bytes, err := json.Marshal(filteredMessage)
@@ -183,7 +190,7 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 				}
 
 				if err := client.WriteTextMessage(bytes); err != nil {
-					log.Printf("WebSocket write error: %v\n", err)
+					log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
 					goto Done
 				}
 			case msg := <-client.sendChannel:
@@ -195,13 +202,16 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		}
 	} else {
 		for {
+			if client.done {
+				break
+			}
 			msg := <-client.sendChannel
 			if msg == nil {
 				goto Done
 			}
-			if err := client.WriteTextMessage(msg); err != nil {
-				log.Printf("WebSocket write error: %v\n", err)
-				break
+			if err := client.conn.WritePreparedMessage(msg); err != nil {
+				log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
+				goto Done
 			}
 		}
 	}
@@ -217,15 +227,22 @@ func (h *TickerWebSocketHandler) readLoop(client *WebSocketClient) {
 		}
 	}
 	client.sendChannel <- nil
+	client.done = true
 }
 
 type TickerStream struct {
-	Tickers []interface{} `json:"tickers"`
+	Tickers *[]interface{} `json:"tickers"`
 }
 
-func (h *TickerWebSocketHandler) Broadcast(v TickerStream) error {
+func (h *TickerWebSocketHandler) Broadcast(v *TickerStream) error {
 	buf, err := json.Marshal(v)
 	if err != nil {
+		return err
+	}
+
+	preparedMessage, err := websocket.NewPreparedMessage(websocket.TextMessage, buf)
+	if err != nil {
+		log.Printf("error: failed to prepare websocket message: %v\n", err)
 		return err
 	}
 
@@ -233,12 +250,18 @@ func (h *TickerWebSocketHandler) Broadcast(v TickerStream) error {
 	defer h.clientsLock.RUnlock()
 
 	for client := range h.clients {
-		select {
-		case client.sendChannel <- buf:
-		default:
-			log.Printf("WebSocket client [%v] appears to be blocked. Dropping.\n",
-				client.GetRemoteAddr())
-			client.done = true
+		if !client.done {
+			select {
+			case client.sendChannel <- preparedMessage:
+				client.blocks = 0
+			default:
+				client.blocks += 1
+				if client.blocks == 3 {
+					log.Printf("WebSocket client [%v] appears to be blocked. Dropping.\n",
+						client.GetRemoteAddr())
+					client.done = true
+				}
+			}
 		}
 
 		if client.done {

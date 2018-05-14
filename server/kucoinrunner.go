@@ -60,7 +60,7 @@ func KuCoinRunner(ws *TickerWebSocketHandler) {
 			outTickers = append(outTickers, outTicker)
 		}
 
-		if err := ws.Broadcast(TickerStream{Tickers: outTickers}); err != nil {
+		if err := ws.Broadcast(&TickerStream{Tickers: &outTickers}); err != nil {
 			log.Printf("kucoin error: failed to broadcast: %v\n", err)
 		}
 

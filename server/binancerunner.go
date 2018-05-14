@@ -142,7 +142,7 @@ func (b *BinanceRunner) Run() {
 						}
 					}
 				}
-				if err := b.websocket.Broadcast(TickerStream{Tickers: message,}); err != nil {
+				if err := b.websocket.Broadcast(&TickerStream{Tickers: &message,}); err != nil {
 					log.Printf("error: broadcasting message: %v", err)
 				}
 
