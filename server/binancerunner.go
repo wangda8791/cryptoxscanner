@@ -21,6 +21,8 @@ import (
 	"time"
 	"fmt"
 	"log"
+	"sync"
+	"runtime"
 )
 
 type BinanceRunner struct {
@@ -161,13 +163,37 @@ func (b *BinanceRunner) Run() {
 }
 
 func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers []pkg.CommonTicker, recalculate bool) {
-	for _, ticker := range tickers {
-		tracker := trackers.GetTracker(ticker.Symbol)
-		tracker.Update(ticker)
-		if recalculate {
-			tracker.Recalculate()
+	channel := make(chan pkg.CommonTicker)
+	wg := sync.WaitGroup{}
+
+	handler := func() {
+		count := 0
+		for {
+			ticker := <-channel
+			if ticker.Timestamp.IsZero() {
+				break
+			}
+			count += 1
+			tracker := trackers.GetTracker(ticker.Symbol)
+			tracker.Update(ticker)
+			if recalculate {
+				tracker.Recalculate()
+			}
 		}
+		wg.Done()
 	}
+
+	for i := 0; i < runtime.NumCPU(); i++ {
+		wg.Add(1)
+		go handler()
+	}
+
+	for _, ticker := range tickers {
+		channel <- ticker
+	}
+
+	close(channel)
+	wg.Wait()
 }
 
 func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {

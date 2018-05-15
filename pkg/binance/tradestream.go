@@ -174,12 +174,12 @@ func (b *TradeStream) Run() {
 		case trade := <-cacheChannel:
 			if trade == nil {
 				cacheDone = true
-				break
+			} else {
+				if cacheDone {
+					log.Printf("warning: got cached trade in state Cache done\n")
+				}
+				b.Publish(trade)
 			}
-			if cacheDone {
-				log.Printf("warning: got cached trade in state Cache done\n")
-			}
-			b.Publish(trade)
 		case trade := <-tradeChannel:
 			if !cacheDone {
 				// The Cache is still being processed. Queue.
