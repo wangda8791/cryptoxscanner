@@ -27,6 +27,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"math/rand"
+	_ "net/http/pprof"
 )
 
 var salt []byte
@@ -70,9 +71,13 @@ func ServerMain(options Options) {
 	router.HandleFunc("/api/1/ping", pingHandler)
 	router.HandleFunc("/api/1/status/websockets", webSocketsStatusHandler)
 
-	http.Handle("/", router)
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", options.Port), nil))
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", options.Port+1), nil)
+		if err != nil {
+			log.Printf("error: failed to start debug server: %v\n", err)
+		}
+	}()
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", options.Port), router))
 }
 
 func buildUpdateMessage(tracker *pkg.TickerTracker) map[string]interface{} {
