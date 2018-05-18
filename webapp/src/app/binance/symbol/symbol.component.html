@@ -29,6 +29,11 @@
         </li>
 
         <li class="nav-item mr-2">
+          <a href="{{ symbol | hodlooLink:'binance' }}"
+             class="nav-link btn btn-outline-secondary btn-sm" target="_blank">Hodloo</a>
+        </li>
+
+        <li class="nav-item mr-2">
           <span *ngIf="lastPrice" class="navbar-text">Last: {{lastPrice |
             number:".8"}}</span>
         </li>

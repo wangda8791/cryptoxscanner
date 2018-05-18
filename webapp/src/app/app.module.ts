@@ -39,6 +39,7 @@ import {BinanceApiService} from './binance-api.service';
 import {DoubleScrollModule} from 'mindgaze-doublescroll/dist';
 import { BaseassetPipe } from './baseasset.pipe';
 import { ExchangesymbolPipe } from './exchangesymbol.pipe';
+import { HodlooLinkPipe } from './hodloo-link.pipe';
 
 const appRoutes: Routes = [
     {
@@ -101,6 +102,7 @@ const appRoutes: Routes = [
         SymbolFilterPipe,
         BaseassetPipe,
         ExchangesymbolPipe,
+        HodlooLinkPipe,
     ],
     imports: [
         BrowserModule,
