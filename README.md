@@ -3,6 +3,12 @@
 This is the source code for my crypto exchange scanner. Currently
 supported exchanges include Binace and KuCoin.
 
+## Building
+
+Build the scanner requires:
+- A working Go 1.10+ installation.
+- A working Node.js v8.10+ installation.
+
 ## License
 
 This code is licensed under GNU Affero Public License, see
