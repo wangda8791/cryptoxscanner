@@ -17,8 +17,8 @@ import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
 import {
     BinanceBaseCoins,
     KuCoinBaseCoins,
-    SymbolUpdate,
     ScannerApiService,
+    SymbolUpdate,
 } from '../scanner-api.service';
 import {Subscription} from 'rxjs/Subscription';
 import {animate, state, style, transition, trigger} from '@angular/animations';
@@ -491,6 +491,16 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             const notification = new Notification("TokenFX Alert", {
                 body: msg,
             });
+        }
+
+        // Remove any alerts over an hour old.
+        while (this.alertArray.length > 1) {
+            const last = this.alertArray[this.alertArray.length - 1];
+            if (new Date().getTime() - last.timestamp.getTime() > 60000) {
+                this.alertArray.pop();
+            } else {
+                break;
+            }
         }
 
         this.newAlerts = true;
