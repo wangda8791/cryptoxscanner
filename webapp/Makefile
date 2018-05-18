@@ -16,3 +16,6 @@ clean:
 
 distclean: clean
 	rm -rf node_modules
+
+install-deps:
+	npm install

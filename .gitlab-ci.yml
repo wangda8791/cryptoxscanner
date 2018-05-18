@@ -18,15 +18,15 @@ build:
     export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
     go version
     go env
-    go get -u github.com/golang/dep/cmd/dep
     cd /go/src/github.com/crankykernel/cryptoxscanner
-    dep ensure
-    go build
-    (
-      cd webapp
-      npm install
-      ./node_modules/.bin/ng build --prod --aot
-    )
+    make install-deps
+    make
+    # go build
+    # (
+    #   cd webapp
+    #   npm install
+    #   ./node_modules/.bin/ng build --prod --aot
+    # )
 
     ls -l cryptoxscanner
     ls -l webapp/dist
