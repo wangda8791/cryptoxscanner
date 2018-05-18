@@ -2,3 +2,6 @@
 /node_modules
 /.idea
 *.iml
+
+src/assets/VERSION.PROTO
+src/assets/VERSION.UI
