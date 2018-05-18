@@ -238,7 +238,8 @@ func (t *TickerTracker) AddTrade(trade binance.AggTrade) {
 	if len(t.Trades) > 0 {
 		lastTrade := t.Trades[len(t.Trades)-1]
 		if trade.Timestamp.Before(lastTrade.Timestamp) {
-			log.Printf("error: received trade old than previous trade\n")
+			log.Printf("error: received trade older than previous trade (symbol: %s)\n",
+				t.Symbol)
 		}
 	}
 
