@@ -2,8 +2,8 @@ all: build
 
 build:
 	./update-proto-version.py
-	go build
 	cd webapp && make
+	go build
 
 clean:
 	rm -f cryptoxscanner

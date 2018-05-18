@@ -33,6 +33,12 @@
   version = "v6.10.2"
 
 [[projects]]
+  name = "github.com/gobuffalo/packr"
+  packages = ["."]
+  revision = "7f4074995d431987caaa35088199f13c44b24440"
+  version = "v1.11.0"
+
+[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
@@ -96,6 +102,12 @@
   packages = ["."]
   revision = "acdc4509485b587f5e675510c4f2c63e90ff68a8"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -164,6 +176,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "54478edf9891929162afbbcf4fdaca613ea16742c249de9e7b92c3f7e0fbfbbd"
+  inputs-digest = "a419ee79534d6502e8b6148a7a402a79b00f603f5c550ddc3a74fd8463c1e7cb"
   solver-name = "gps-cdcl"
   solver-version = 1

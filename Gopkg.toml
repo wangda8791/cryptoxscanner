@@ -48,3 +48,7 @@
 [[constraint]]
   name = "github.com/go-redis/redis"
   version = "6.10.2"
+
+[[constraint]]
+  name = "github.com/gobuffalo/packr"
+  version = "1.11.0"

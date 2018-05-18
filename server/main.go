@@ -28,6 +28,7 @@ import (
 	"encoding/hex"
 	"math/rand"
 	_ "net/http/pprof"
+	"github.com/gobuffalo/packr"
 )
 
 var salt []byte
@@ -41,6 +42,8 @@ func init() {
 type Options struct {
 	Port uint16
 }
+
+var static packr.Box
 
 func ServerMain(options Options) {
 
@@ -70,6 +73,16 @@ func ServerMain(options Options) {
 
 	router.HandleFunc("/api/1/ping", pingHandler)
 	router.HandleFunc("/api/1/status/websockets", webSocketsStatusHandler)
+
+	static := packr.NewBox("../webapp/dist")
+	staticServer := http.FileServer(static)
+
+	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !static.Has(r.URL.Path) {
+			r.URL.Path = "/"
+		}
+		staticServer.ServeHTTP(w, r)
+	})
 
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", options.Port+1), nil)
