@@ -3,6 +3,7 @@ all: build
 build:
 	./update-proto-version.py
 	cd webapp && make
+	packr -z
 	go build -ldflags "-w -s"
 
 install-deps:
