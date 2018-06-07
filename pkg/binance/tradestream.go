@@ -233,7 +233,7 @@ func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &streamEvent.AggTrade, nil
+	return streamEvent.AggTrade, nil
 }
 
 func (b *TradeStream) GetStreams() ([]string, error) {

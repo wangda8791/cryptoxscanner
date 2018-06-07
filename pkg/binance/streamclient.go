@@ -41,13 +41,13 @@ func (s *StreamClient) ReadNext() ([]byte, error) {
 	return body, err
 }
 
-func (s *StreamClient) Decode(buf []byte) (*binance.RawStreamMessage, error) {
-	var message binance.RawStreamMessage
+func (s *StreamClient) Decode(buf []byte) (*binance.CombinedStreamMessage, error) {
+	var message binance.CombinedStreamMessage
 	err := json.Unmarshal(buf, &message)
 	return &message, err
 }
 
-func (s *StreamClient) Run(channel chan *binance.RawStreamMessage) {
+func (s *StreamClient) Run(channel chan *binance.CombinedStreamMessage) {
 	for {
 		// Connect, runs in its own loop until connected.
 		log.Printf("binance: connecting to stream [%s]\n", s.name)

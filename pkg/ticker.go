@@ -43,15 +43,15 @@ type CommonTicker struct {
 	Low  float64
 }
 
-func CommonTickerFromBinanceTicker(ticker binance.Ticker24) CommonTicker {
+func CommonTickerFromBinanceTicker(ticker binance.Stream24Ticker) CommonTicker {
 	common := CommonTicker{}
 	common.Symbol = ticker.Symbol
-	common.Timestamp = ticker.Timestamp
-	common.LastPrice = ticker.Close
-	common.QuoteVolume = ticker.QuoteVolume
+	common.Timestamp = ticker.Timestamp()
+	common.LastPrice = ticker.CurrentDayClose
+	common.QuoteVolume = ticker.TotalQuoteVolume
 	common.Bid = ticker.Bid
 	common.Ask = ticker.Ask
-	common.PriceChangePct24 = ticker.PriceChangePct
+	common.PriceChangePct24 = ticker.PriceChangePercent
 	common.High = ticker.HighPrice
 	common.Low = ticker.LowPrice
 	return common

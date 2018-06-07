@@ -33,11 +33,11 @@ func NewTickerStream() *TickerStream {
 }
 
 func (s *TickerStream) Run(channel chan []pkg.CommonTicker) {
-	inChannel := make(chan *binance.RawStreamMessage)
+	inChannel := make(chan *binance.CombinedStreamMessage)
 	go NewStreamClient("binance.ticker", "!ticker@arr").Run(inChannel)
 	for {
 		streamMessage := <-inChannel
-		s.CacheAdd(streamMessage.RawData)
+		s.CacheAdd(streamMessage.Bytes)
 		s.PruneCache()
 		channel <- s.TransformTickers(streamMessage.Tickers)
 	}
@@ -62,12 +62,10 @@ func (s *TickerStream) PruneCache() {
 	}
 }
 
-func (s *TickerStream) TransformTickers(inTickers []binance.RawTicker24) []pkg.CommonTicker {
+func (s *TickerStream) TransformTickers(inTickers []binance.Stream24Ticker) []pkg.CommonTicker {
 	tickers := []pkg.CommonTicker{}
 	for _, rawTicker := range inTickers {
-		tickers = append(tickers,
-			pkg.CommonTickerFromBinanceTicker(
-				binance.NewTicker24FromRawTicker24(rawTicker)))
+		tickers = append(tickers, pkg.CommonTickerFromBinanceTicker(rawTicker))
 	}
 	return tickers
 }
@@ -82,8 +80,8 @@ func (s *TickerStream) DecodeTickers(buf []byte) ([]pkg.CommonTicker, error) {
 
 	if len(message.Tickers) > 0 {
 		for _, rawTicker := range message.Tickers {
-			tickers = append(tickers, pkg.CommonTickerFromBinanceTicker(
-				binance.NewTicker24FromRawTicker24(rawTicker)))
+			tickers = append(tickers,
+				pkg.CommonTickerFromBinanceTicker(rawTicker))
 		}
 	}
 
