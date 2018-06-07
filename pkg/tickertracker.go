@@ -23,6 +23,19 @@ import (
 	"sync"
 )
 
+type Aggregate struct {
+	// The first moment of the period in this aggregate.
+	Time time.Time
+
+	Open  float64
+	High  float64
+	Low   float64
+	Close float64
+
+	// The 24 volume in the quote asset.
+	QuoteVolume24 float64
+}
+
 type TickerMetrics struct {
 	// Common metrics.
 	PriceChangePercent  float64
@@ -37,6 +50,7 @@ type TickerMetrics struct {
 	TotalVolume float64
 	NetVolume   float64
 	BuyVolume   float64
+	RSI         float64
 }
 
 type TickerTracker struct {
@@ -47,7 +61,9 @@ type TickerTracker struct {
 	H24Metrics TickerMetrics
 
 	// Trades, in Binance format.
-	Trades []*binance.AggTrade
+	Trades []*binance.StreamAggTrade
+
+	Aggs map[int][]Aggregate
 
 	HaveVwap        bool
 	HaveTotalVolume bool
@@ -73,8 +89,9 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
 		Ticks:   []*CommonTicker{},
-		Trades:  []*binance.AggTrade{},
+		Trades:  []*binance.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
+		Aggs:    make(map[int][]Aggregate),
 	}
 
 	for _, i := range Buckets {
@@ -94,6 +111,53 @@ func (t *TickerTracker) LastTick() *CommonTicker {
 func (t *TickerTracker) Recalculate() {
 	t.CalculateTrades()
 	t.CalculateTicks()
+
+	for _, bucket := range Buckets {
+		t.Metrics[bucket].RSI = t.CalculateRSI(t.Aggs[bucket])
+	}
+}
+
+func (t *TickerTracker) CalculateRSI(aggs []Aggregate) (float64) {
+	if aggs == nil {
+		return 0
+	}
+
+	period := 14
+
+	gains := float64(0)
+	losses := float64(0)
+
+	prev := aggs[0]
+
+	for i, cp := range aggs {
+		if i < period {
+			if cp.Close < prev.Close {
+				losses += (prev.Close - cp.Close)
+			} else if cp.Close > prev.Close {
+				gains += (cp.Close - prev.Close)
+			}
+			if i == period-1 {
+				gains = gains / float64(period)
+				losses = losses / float64(period)
+			}
+		} else {
+			loss := float64(0)
+			gain := float64(0)
+			if cp.Close < prev.Close {
+				loss = prev.Close - cp.Close
+			} else if cp.Close > prev.Close {
+				gain = cp.Close - prev.Close
+			}
+			losses = ((losses * 13) + loss) / 14
+			gains = ((gains * 13) + gain) / 14
+		}
+		prev = cp
+	}
+
+	rs := gains / losses
+	rsi := 100 - (100 / (1 + rs))
+
+	return rsi
 }
 
 func (t *TickerTracker) CalculateTicks() {
@@ -133,6 +197,7 @@ func (t *TickerTracker) CalculateTicks() {
 			metrics.PriceChangePercent = 0
 		}
 
+		// Volume rate of change (VROC).
 		if tick.QuoteVolume > 0 {
 			volumeChange := last.QuoteVolume - tick.QuoteVolume
 			volumeChangePercent := Round3(volumeChange / tick.QuoteVolume * 100)
@@ -184,12 +249,12 @@ func (t *TickerTracker) CalculateTrades() {
 	for i := count - 1; i >= 0; i-- {
 		trade := t.Trades[i]
 
-		age := now.Sub(trade.Timestamp)
+		age := now.Sub(trade.Timestamp())
 
-		if trade.IsBuy() {
-			buyVolume += trade.QuoteQuantity
+		if !trade.BuyerMaker {
+			buyVolume += trade.QuoteQuantity()
 		} else {
-			sellVolume += trade.QuoteQuantity
+			sellVolume += trade.QuoteQuantity()
 		}
 
 		vwapVolume += trade.Quantity
@@ -229,7 +294,7 @@ func (t *TickerTracker) Update(ticker CommonTicker) {
 	}
 }
 
-func (t *TickerTracker) AddTrade(trade binance.AggTrade) {
+func (t *TickerTracker) AddTrade(trade binance.StreamAggTrade) {
 	if trade.Symbol == "" {
 		log.Printf("error: not adding trade with empty symbol")
 		return
@@ -237,19 +302,117 @@ func (t *TickerTracker) AddTrade(trade binance.AggTrade) {
 
 	if len(t.Trades) > 0 {
 		lastTrade := t.Trades[len(t.Trades)-1]
-		if trade.Timestamp.Before(lastTrade.Timestamp) {
+		if trade.Timestamp().Before(lastTrade.Timestamp()) {
 			log.Printf("error: received trade older than previous trade (symbol: %s)\n",
 				t.Symbol)
 		}
 	}
 
 	t.Trades = append(t.Trades, &trade)
+
+	openTime := trade.Timestamp().Truncate(time.Minute)
+
+	if t.Aggs[1] == nil {
+		t.Aggs[1] = append(t.Aggs[1], Aggregate{
+			Time:  openTime,
+			Open:  trade.Price,
+			Close: trade.Price,
+			High:  trade.Price,
+			Low:   trade.Price,
+		})
+	} else {
+		aggs := t.Aggs[1]
+		lastAgg := &aggs[len(aggs)-1]
+		if lastAgg.Time == openTime {
+			lastAgg.Close = trade.Price
+			if trade.Price > lastAgg.High {
+				lastAgg.High = trade.Price
+			}
+			if trade.Price < lastAgg.Low {
+				lastAgg.Low = trade.Price
+			}
+		} else {
+			nextTime := lastAgg.Time.Add(time.Minute)
+			for {
+				if nextTime.Before(openTime) {
+					t.Aggs[1] = append(aggs, Aggregate{
+						Time:  nextTime,
+						Open:  lastAgg.Close,
+						Close: lastAgg.Close,
+						High:  lastAgg.Close,
+						Low:   lastAgg.Close,
+					})
+					nextTime = nextTime.Add(time.Minute)
+				} else {
+					t.Aggs[1] = append(aggs, Aggregate{
+						Time:  openTime,
+						Open:  lastAgg.Close,
+						Close: trade.Price,
+						High:  trade.Price,
+						Low:   trade.Price,
+					})
+					break
+				}
+			}
+		}
+	}
+	m1Agg := t.Aggs[1][len(t.Aggs[1])-1]
+
+	for _, interval := range Buckets[1:] {
+		openTime := m1Agg.Time.Truncate(time.Minute * time.Duration(interval))
+		aggs := t.Aggs[interval]
+		if aggs == nil {
+			aggs = append(aggs, Aggregate{
+				Time:  openTime,
+				Open:  m1Agg.Open,
+				Close: m1Agg.Close,
+				High:  m1Agg.High,
+				Low:   m1Agg.Low,
+			})
+			t.Aggs[interval] = aggs
+		} else {
+			aggs := t.Aggs[interval]
+			lastAgg := &aggs[len(aggs)-1]
+			if lastAgg.Time == openTime {
+				lastAgg.Close = m1Agg.Close
+				if m1Agg.Close > lastAgg.High {
+					lastAgg.High = m1Agg.Close
+				}
+				if m1Agg.Close < lastAgg.Low {
+					lastAgg.Low = m1Agg.Close
+				}
+			} else {
+				nextTime := lastAgg.Time.Add(time.Minute * time.Duration(interval))
+				for {
+					if nextTime.Before(openTime) {
+						t.Aggs[interval] = append(aggs, Aggregate{
+							Time:  nextTime,
+							Open:  lastAgg.Close,
+							Close: lastAgg.Close,
+							High:  lastAgg.Close,
+							Low:   lastAgg.Close,
+						})
+						nextTime = nextTime.Add(time.Minute * time.Duration(interval))
+					} else {
+						t.Aggs[interval] = append(aggs, Aggregate{
+							Time:  openTime,
+							Open:  lastAgg.Close,
+							Close: m1Agg.Close,
+							High:  m1Agg.High,
+							Low:   m1Agg.Low,
+						})
+						break
+					}
+				}
+			}
+		}
+	}
 }
 
 func (t *TickerTracker) PruneTrades(now time.Time) {
 	chop := 0
 	for i, trade := range t.Trades {
-		age := now.Sub(trade.Timestamp)
+		age := now.Sub(trade.Timestamp())
 		if age < time.Hour {
 			break
 		}

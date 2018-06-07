@@ -27,33 +27,33 @@ import (
 )
 
 type TradeStream struct {
-	subscribers map[chan binance.AggTrade]bool
+	subscribers map[chan binance.StreamAggTrade]bool
 	cache       *pkg.RedisInputCache
 	lock        sync.RWMutex
 }
 
 func NewTradeStream() *TradeStream {
 	return &TradeStream{
-		subscribers: map[chan binance.AggTrade]bool{},
+		subscribers: map[chan binance.StreamAggTrade]bool{},
 		cache:       pkg.NewRedisInputCache("binance.trades"),
 	}
 }
 
-func (b *TradeStream) Subscribe() chan binance.AggTrade {
+func (b *TradeStream) Subscribe() chan binance.StreamAggTrade {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan binance.AggTrade)
+	channel := make(chan binance.StreamAggTrade)
 	b.subscribers[channel] = true
 	return channel
 }
 
-func (b *TradeStream) Unsubscribe(channel chan binance.AggTrade) {
+func (b *TradeStream) Unsubscribe(channel chan binance.StreamAggTrade) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	delete(b.subscribers, channel)
 }
 
-func (b *TradeStream) RestoreFromCache(channel chan *binance.AggTrade, count int64) {
+func (b *TradeStream) RestoreFromCache(channel chan *binance.StreamAggTrade, count int64) {
 	i := int64(0)
 	start := time.Now()
 	first := time.Time{}
@@ -86,10 +86,10 @@ func (b *TradeStream) RestoreFromCache(channel chan *binance.AggTrade, count int
 			log.Printf("error: failed to decode aggTrade from redis Cache: %v\n", err)
 			continue
 		}
-		last = aggTrade.Timestamp
+		last = aggTrade.Timestamp()
 
 		if first.IsZero() {
-			first = aggTrade.Timestamp
+			first = aggTrade.Timestamp()
 		}
 
 		channel <- aggTrade
@@ -109,8 +109,8 @@ func (b *TradeStream) RestoreFromCache(channel chan *binance.AggTrade, count int
 
 func (b *TradeStream) Run() {
 
-	cacheChannel := make(chan *binance.AggTrade)
-	tradeChannel := make(chan *binance.AggTrade)
+	cacheChannel := make(chan *binance.StreamAggTrade)
+	tradeChannel := make(chan *binance.StreamAggTrade)
 
 	cacheCount, err := b.cache.Len()
 	if err != nil {
@@ -168,7 +168,7 @@ func (b *TradeStream) Run() {
 	}()
 
 	cacheDone := false
-	tradeQueue := []*binance.AggTrade{}
+	tradeQueue := []*binance.StreamAggTrade{}
 	for {
 		select {
 		case trade := <-cacheChannel:
@@ -193,7 +193,7 @@ func (b *TradeStream) Run() {
 				for _, trade := range tradeQueue {
 					b.Publish(trade)
 				}
-				tradeQueue = []*binance.AggTrade{}
+				tradeQueue = []*binance.StreamAggTrade{}
 			}
 			b.Publish(trade)
 			b.PruneCache()
@@ -213,7 +213,7 @@ func (b *TradeStream) PruneCache() {
 		if err != nil {
 			break
 		}
-		if time.Now().Sub(time.Unix(next.Timestamp, 0)) > time.Hour {
+		if time.Now().Sub(time.Unix(next.Timestamp, 0)) > time.Hour * 2{
 			b.cache.LRemove()
 		} else {
 			break
@@ -221,7 +221,7 @@ func (b *TradeStream) PruneCache() {
 	}
 }
 
-func (b *TradeStream) Publish(trade *binance.AggTrade) {
+func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	for subscriber := range b.subscribers {
@@ -229,14 +229,13 @@ func (b *TradeStream) Publish(trade *binance.AggTrade) {
 	}
 }
 
-func (b *TradeStream) DecodeTrade(body []byte) (*binance.AggTrade, error) {
-	var rawAggTrade binance.RawStreamAggTrade
+func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) {
+	var rawAggTrade binance.StreamAggTrade
 	if err := json.Unmarshal(body, &rawAggTrade); err != nil {
 		return nil, err
 		log.Printf("binance: failed to decode stream agg trade: %v\n", err)
 	}
-	aggTrade := binance.NewAggTradeFromRaw(rawAggTrade.AggTrade)
-	return &aggTrade, nil
+	return &rawAggTrade, nil
 }
 
 func (b *TradeStream) GetStreams() ([]string, error) {

@@ -240,7 +240,6 @@ class PriceChart {
         while (this.data.length > 0) {
             const age = now - this.data[0][0];
             if (age > 60000) {
-                console.log(age);
                 this.data.shift();
             } else {
                 break;

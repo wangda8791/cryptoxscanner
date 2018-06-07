@@ -162,4 +162,6 @@ export interface SymbolUpdate {
     close: number;
     timestamp: string;
     volume: number;
+
+    rsi_60?: number;
 }

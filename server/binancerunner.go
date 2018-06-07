@@ -23,6 +23,7 @@ import (
 	"log"
 	"sync"
 	"runtime"
+	"math"
 )
 
 type BinanceRunner struct {
@@ -85,8 +86,8 @@ func (b *BinanceRunner) Run() {
 				ticker := b.trackers.GetTracker(trade.Symbol)
 				ticker.AddTrade(trade)
 
-				if trade.Timestamp.After(lastTradeTime) {
-					lastTradeTime = trade.Timestamp
+				if trade.Timestamp().After(lastTradeTime) {
+					lastTradeTime = trade.Timestamp()
 				}
 
 				tradeCount++
@@ -131,6 +132,12 @@ func (b *BinanceRunner) Run() {
 					if tracker.HaveNetVolume {
 						for i, k := range tracker.Metrics {
 							update[fmt.Sprintf("nv_%d", i)] = pkg.Round8(k.NetVolume);
+						}
+					}
+
+					for i, k := range tracker.Metrics {
+						if !math.IsNaN(k.RSI) {
+							update[fmt.Sprintf("rsi_%d", i*60)] = pkg.Round8(k.RSI)
 						}
 					}
 

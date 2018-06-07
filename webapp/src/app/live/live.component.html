@@ -107,67 +107,83 @@
 
   </nav>
 
-  <div class="collapse app-toolbar-collapse" id="moreFilters">
+  <div class="_collapse app-toolbar-collapse" id="moreFilters">
     <nav class="navbar navbar-light bg-light app-toolbar">
 
-      <div class="col-md">
-        <div class="input-group input-group-sm">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Min Price</div>
-          </div>
-          <input type="text" class="form-control"
-                 [(ngModel)]="config.minPrice">
-          <div class="input-group-append">
-            <button class="btn btn-secondary" (click)="config.minPrice=null">
-              <i class="fa fa-times-circle"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md">
-        <div class="input-group input-group-sm mt-2 mt-md-0">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Max Price</div>
-          </div>
-          <input type="text" class="form-control"
-                 [(ngModel)]="config.maxPrice">
-          <div class="input-group-append">
-            <button class="btn btn-secondary" (click)="config.maxPrice=null">
-              <i class="fa fa-times-circle"></i>
-            </button>
+      <div class="col">
+        <div class="form-group">
+          <label>Min Price</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control"
+                   [(ngModel)]="config.minPrice">
+            <div class="input-group-append">
+              <button class="btn btn-secondary" (click)="config.minPrice=null">
+                <i class="fa fa-times-circle"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg">
-        <div class="input-group input-group-sm mt-2 mt-lg-0">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Max 24h Change</div>
-          </div>
-          <input type="text" class="form-control"
-                 [(ngModel)]="config.max24Change">
-          <div class="input-group-append">
-            <button class="btn btn-secondary"
-                    (click)="config.max24Change=null">
-              <i class="fa fa-times-circle"></i>
-            </button>
+      <div class="col">
+        <div class="form-group">
+          <label>Max Price</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control"
+                   [(ngModel)]="config.maxPrice">
+            <div class="input-group-append">
+              <button class="btn btn-secondary" (click)="config.maxPrice=null">
+                <i class="fa fa-times-circle"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="col-lg">
-        <div class="input-group input-group-sm mt-2 mt-lg-0">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Min 24h Change</div>
+      <div class="col">
+        <div class="form-group">
+          <label>Max 24h Change</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control"
+                   [(ngModel)]="config.max24Change">
+            <div class="input-group-append">
+              <button class="btn btn-secondary"
+                      (click)="config.max24Change=null">
+                <i class="fa fa-times-circle"></i>
+              </button>
+            </div>
           </div>
-          <input type="text" class="form-control"
-                 [(ngModel)]="config.min24Change">
-          <div class="input-group-append">
-            <button class="btn btn-secondary"
-                    (click)="config.min24Change=null">
-              <i class="fa fa-times-circle"></i>
-            </button>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="form-group">
+          <label>Min 24h Change</label>
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control"
+                   [(ngModel)]="config.min24Change">
+            <div class="input-group-append">
+              <button class="btn btn-secondary"
+                      (click)="config.min24Change=null">
+                <i class="fa fa-times-circle"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="form-group">
+          <label>Max RSI(1m)</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control"
+                   [(ngModel)]="config.filters.maxRsi60">
+            <div class="input-group-append">
+              <button class="btn btn-secondary"
+                      (click)="config.filters.maxRsi60=null">
+                <i class="fa fa-times-circle"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -180,55 +196,61 @@
     ago.</span>
 
   <div class="table-responsive">
-    <mdz-double-scroll>
-      <table class="table table-sm table-bordered table-hover">
-        <tr>
-          <td></td>
-          <th app-th-sortable *ngFor="let header of headers"
-              (click)="sortBy(header.name)"
-              [name]="header.name" [sortBy]="config.sortBy"
-              [sortOrder]="config.sortOrder"
-              [ngStyle]="{'background': header.name == config.sortBy ? 'gainsboro' : ''}"
-              [hidden]="config.visibleColumns[header.name] != true">
-            {{header.title}}
-          </th>
-        </tr>
-        <tr *ngFor="let ticker of tickers; let i = index; trackBy: trackBy"
-            (mouseenter)="mouseEnter(i);" (mouseleave)="mouseEnter(null)">
-          <td>
-            <input type="checkbox" class="float-right" style="margin-top: 4px;"
-                   [(ngModel)]="config.watching[ticker.symbol]"
-                   (change)="saveConfig();">
-          </td>
-          <td *ngFor="let col of headers;"
-              [hidden]="config.visibleColumns[col.name] != true"
-              style="white-space: nowrap"
-              [ngStyle]="{'background': col.name == config.sortBy ? 'gainsboro' : ''}">
-            <span [ngSwitch]="col.type"
-                  [ngClass]="{'up': col.updown && ticker[col.name] > 0,
+    <div class="table-wrapper">
+      <mdz-double-scroll>
+        <table class="table table-sm table-bordered table-hover">
+          <tr>
+            <th class="header-col">Symbol</th>
+            <th app-th-sortable *ngFor="let header of headers"
+                (click)="sortBy(header.name)"
+                [name]="header.name" [sortBy]="config.sortBy"
+                [sortOrder]="config.sortOrder"
+                [ngStyle]="{'background': header.name == config.sortBy ? 'gainsboro' : ''}"
+                [hidden]="config.visibleColumns[header.name] != true">
+              {{header.title}}
+            </th>
+          </tr>
+          <tr *ngFor="let ticker of tickers; let i = index; trackBy: trackBy"
+              [title]="ticker.symbol"
+              (mouseenter)="mouseEnter(i);" (mouseleave)="mouseEnter(null)">
+            <td class="header-col">
+              <input type="checkbox"
+                     [(ngModel)]="config.watching[ticker.symbol]"
+                     (change)="saveConfig();">
+              <a *ngIf="hasCharts"
+                 [routerLink]="['/binance/symbol', ticker.symbol]"
+                 target="_blank">{{ticker.symbol}}</a>
+              <span *ngIf="!hasCharts">{{ticker.symbol}}</span>
+            </td>
+            <td *ngFor="let col of headers;"
+                [hidden]="config.visibleColumns[col.name] != true"
+                [ngStyle]="{'background': col.name == config.sortBy ? 'gainsboro' : ''}">
+              <span [ngSwitch]="col.type"
+                    [ngClass]="{'up': col.updown && ticker[col.name] > 0,
                             'down': col.updown && ticker[col.name] < 0}">
-              <span *ngSwitchCase="'percent'"
-                    [ngClass]="{'up': ticker[col.name] > 0,
+                <span *ngSwitchCase="'percent'"
+                      [ngClass]="{'up': ticker[col.name] > 0,
                   'down': ticker[col.name] < 0}">
-                {{ticker[col.name] | percent:col.format }}
-              </span>
-              <span *ngSwitchCase="'percent-number'"
-                    [ngClass]="{'up': ticker[col.name] > 0,
+                  {{ticker[col.name] | percent:col.format }}
+                </span>
+                <span *ngSwitchCase="'percent-number'"
+                      [ngClass]="{'up': ticker[col.name] > 0,
                   'down': ticker[col.name] < 0}">
-                {{ticker[col.name] | number:".2-2" }}
+                  {{ticker[col.name] | number:".2-2" }}
+                </span>
+                <span *ngSwitchCase="'number'">
+                  {{ticker[col.name] | number:col.format }}
+                </span>
+                <span *ngSwitchDefault>
+                  <a *ngIf="col.routerLink"
+                     [routerLink]="[col.routerLink, ticker[col.name]]">{{ticker[col.name]}}</a>
+                  <span *ngIf="!col.routerLink">{{ticker[col.name]}}</span>
+                </span>
               </span>
-              <span *ngSwitchCase="'number'">
-                {{ticker[col.name] | number:col.format }}
-              </span>
-              <span *ngSwitchDefault>
-                <a *ngIf="col.routerLink"
-                   [routerLink]="[col.routerLink, ticker[col.name]]">{{ticker[col.name]}}</a>
-                <span *ngIf="!col.routerLink">{{ticker[col.name]}}</span>
-              </span>
-            </span>
-          </td>
-        </tr>
-      </table>
-    </mdz-double-scroll>
+            </td>
+          </tr>
+        </table>
+      </mdz-double-scroll>
+    </div>
   </div>
 </div>

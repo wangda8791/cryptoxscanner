@@ -25,11 +25,12 @@ import {Subscription} from 'rxjs/Subscription';
 import {
     BinanceBaseCoins,
     KuCoinBaseCoins,
-    SymbolUpdate,
-    ScannerApiService
+    ScannerApiService,
+    SymbolUpdate
 } from '../scanner-api.service';
 import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Observable} from 'rxjs/Observable';
+import * as lodash from "lodash";
 
 declare var localStorage: any;
 
@@ -65,7 +66,6 @@ interface ColumnConfig {
     routerLink?: string;
     fn?: any;
 }
-
 
 @Component({
     templateUrl: './live.component.html',
@@ -105,6 +105,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         count: 25,
         visibleColumns: {},
         watching: {},
+
+        filters: {
+            maxRsi60: null,
+        }
     };
 
     private stream: Subscription = null;
@@ -143,13 +147,6 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     protected initHeaders() {
         this.headers = [
             {
-                title: "Symbol",
-                name: "symbol",
-                display: true,
-                type: "function",
-                routerLink: this.hasCharts ? "/binance/symbol" : null,
-            },
-            {
                 title: "Last",
                 name: "close",
                 type: "number",
@@ -168,6 +165,13 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 name: "ask",
                 type: "number",
                 format: ".8",
+                display: false,
+            },
+            {
+                title: "Spread",
+                name: "spread",
+                type: "percent",
+                format: ".3-3",
                 display: false,
             },
             {
@@ -394,6 +398,34 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
             },
+            {
+                title: "RSI 1m",
+                name: "rsi_60",
+                type: "number",
+                format: ".2-2",
+                display: true,
+            },
+            {
+                title: "RSI 3m",
+                name: "rsi_180",
+                type: "number",
+                format: ".2-2",
+                display: true,
+            },
+            {
+                title: "RSI 5m",
+                name: "rsi_300",
+                type: "number",
+                format: ".2-2",
+                display: true,
+            },
+            {
+                title: "RSI 15m",
+                name: "rsi_900",
+                type: "number",
+                format: ".2-2",
+                display: true,
+            }
         ];
 
         if (this.exchange == "binance") {
@@ -413,10 +445,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         if (localStorage[this.configKey]) {
             try {
                 const config = JSON.parse(localStorage[this.configKey]);
+                lodash.merge(config, this.config);
                 if (!config.visibleColumns) {
                     this.showDefaultColumns();
                 } else {
-                    console.log(config.visibleColumns);
                     for (const col of this.headers) {
                         if (!(col.name in config.visibleColumns)) {
                             config.visibleColumns[col.name] = col.display;
@@ -551,6 +583,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         const minPrice = this.asNumber(this.config.minPrice);
         const max24Change = this.asNumber(this.config.max24Change);
         const min24Change = this.asNumber(this.config.min24Change);
+        const maxRsi60 = this.asNumber(this.config.filters.maxRsi60);
 
         tickers = tickers.filter((ticker) => {
 
@@ -585,6 +618,12 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
 
             if (minPrice) {
                 if (ticker.close < minPrice) {
+                    return false;
+                }
+            }
+
+            if (maxRsi60) {
+                if (ticker.rsi_60 && ticker.rsi_60 > maxRsi60) {
                     return false;
                 }
             }
@@ -627,6 +666,8 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             ticker[`volume_change_pct_${key}`] =
                     ticker.volume_change_pct[key];
         }
+
+        ticker["spread"] = (ticker.ask - ticker.bid) / ticker.bid;
     }
 
     /**

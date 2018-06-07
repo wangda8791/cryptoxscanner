@@ -200,6 +200,7 @@
       </div>
 
     </div>
+
     <div class="col">
       <div class="table-responsive">
         <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
@@ -234,6 +235,24 @@
           </tr>
         </table>
       </div>
+
+      <div class="table-responsive">
+        <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
+          <tr>
+            <th>RSI 1m</th>
+            <th>RSI 3m</th>
+            <th>RSI 5m</th>
+            <th>RSI 15m</th>
+          </tr>
+          <tr *ngIf="lastUpdate">
+            <td>{{lastUpdate.rsi_60 | number:".4-4"}}</td>
+            <td>{{lastUpdate.rsi_180 | number:".4-4"}}</td>
+            <td>{{lastUpdate.rsi_300 | number:".4-4"}}</td>
+            <td>{{lastUpdate.rsi_900 | number:".4-4"}}</td>
+          </tr>
+        </table>
+      </div>
+
       <div class="table-responsive">
         <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
           <thead>

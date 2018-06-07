@@ -1,5 +1,37 @@
+.table-wrapper {
+  margin-left: 8em;
+}
+
 table {
   th {
     cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .header-col {
+    white-space: nowrap;
+  }
+}
+
+th.header-col {
+  margin-top: -1px;
+}
+
+.header-col {
+  position: absolute;
+  width: 8em;
+  left: 8px;
+  top: auto;
+  border-top-width: 1px;
+  border-bottom: 0;
+  margin-right: 2px;
+  padding-right: 0;
+}
+
+.form-group {
+  font-size: 0.875rem;
+
+  label {
+    margin-bottom: 0;
   }
 }
