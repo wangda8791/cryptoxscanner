@@ -21,7 +21,6 @@ import (
 	"strings"
 	"log"
 	"time"
-	"encoding/json"
 	"github.com/crankykernel/cryptoxscanner/pkg"
 	"sync"
 )
@@ -230,12 +229,11 @@ func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 }
 
 func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) {
-	var rawAggTrade binance.StreamAggTrade
-	if err := json.Unmarshal(body, &rawAggTrade); err != nil {
+	streamEvent, err := binance.DecodeRawStreamMessage(body)
+	if err != nil {
 		return nil, err
-		log.Printf("binance: failed to decode stream agg trade: %v\n", err)
 	}
-	return &rawAggTrade, nil
+	return &streamEvent.AggTrade, nil
 }
 
 func (b *TradeStream) GetStreams() ([]string, error) {
