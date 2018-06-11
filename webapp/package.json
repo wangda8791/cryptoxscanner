@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "./node_modules/.bin/ng serve --proxy-config proxy-dev.conf.json",
     "build": "ng build --prod",
     "lint": "ng lint",
     "update-build": "node ./replace.build.js"
