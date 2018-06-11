@@ -237,7 +237,7 @@ func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) 
 }
 
 func (b *TradeStream) GetStreams() ([]string, error) {
-	symbols, err := binance.NewClient(nil).GetAllSymbols()
+	symbols, err := binance.NewAnonymousClient().GetAllSymbols()
 	if err != nil {
 		return nil, nil
 	}
