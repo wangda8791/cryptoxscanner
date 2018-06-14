@@ -107,27 +107,23 @@
     <div class="row mb-2">
       <div class="col-12 col-lg">
         <div class="card">
-          <div class="card-header">
-            Drop Alerts
+          <div class="card-header"
+               [ngClass]="{'bg-primary': config.alerts.drop.enabled}"
+          >
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox"
+                     [(ngModel)]="config.alerts.drop.enabled"
+                     (change)="saveConfig()">
+              <label class="form-check-label">
+                <b>Drop Alerts</b>
+              </label>
+            </div>
           </div>
           <div class="card-body">
-            <form>
-              <div class="form-group row">
-                <button *ngIf="!config.alerts.drop.enabled" type="btn"
-                        class="btn btn-secondary btn-block btn-sm"
-                        (click)="config.alerts.drop.enabled=true; saveConfig();">
-                  Enable
-                </button>
-                <button *ngIf="config.alerts.drop.enabled" type="btn"
-                        class="btn btn-primary btn-block btn-sm"
-                        (click)="config.alerts.drop.enabled=false; saveConfig();">
-                  Enabled
-                </button>
-              </div>
-              <div class="form-group row">
-                <label
-                    class="col-sm-3 col-form-label col-form-label-sm">Window</label>
-                <div class="col-sm-9">
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Window</label>
                   <div class="input-group input-group-sm">
                     <select class="form-control form-control-sm"
                             name="dropAlertsWindow"
@@ -144,10 +140,11 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group row">
-                <label class="col-sm-3 col-form-label col-form-label-sm">Drop
-                  %</label>
-                <div class="col-sm-9">
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Drop %</label>
                   <div class="input-group input-group-sm">
                     <input type="number" class="form-control"
                            name="dropAlertsPercent"
@@ -170,14 +167,15 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group row">
-                <label
-                    class="col-sm-3 col-form-label col-form-label-sm">Volume</label>
-                <div class="col-sm-5">
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Min. 24h Volume</label>
                   <div class="input-group input-group-sm">
                     <input type="number" class="form-control"
                            name="dropAlertsVolume"
-                           [(ngModel)]="config.alerts.drop.volume"
+                           [(ngModel)]="config.alerts.drop.minVolume24"
                            (change)="saveConfig()">
                     <div class="input-group-append">
                       <label
@@ -185,42 +183,30 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-sm-4">
-                  <select class="form-control form-control-sm"
-                          name="dropAlertsVolumeWindow"
-                          [(ngModel)]="config.alerts.drop.volumeRange"
-                          (change)="saveConfig();">
-                    <option>24h</option>
-                  </select>
-                </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
       <div class="col-12 col-lg">
         <div class="card">
-          <div class="card-header">
-            Gain Alerts
+          <div class="card-header"
+               [ngClass]="{'bg-primary': config.alerts.gain.enabled}"
+          >
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox"
+                     [(ngModel)]="config.alerts.gain.enabled"
+                     (change)="saveConfig()">
+              <label class="form-check-label">
+                <b>Gain Alerts</b>
+              </label>
+            </div>
           </div>
           <div class="card-body">
-            <form>
-              <div class="form-group row">
-                <button *ngIf="!config.alerts.gain.enabled" type="btn"
-                        class="btn btn-secondary btn-block btn-sm"
-                        (click)="config.alerts.gain.enabled=true; saveConfig();">
-                  Enable
-                </button>
-                <button *ngIf="config.alerts.gain.enabled" type="btn"
-                        class="btn btn-primary btn-block btn-sm"
-                        (click)="config.alerts.gain.enabled=false; saveConfig();">
-                  Enabled
-                </button>
-              </div>
-              <div class="form-group row">
-                <label
-                    class="col-sm-3 col-form-label col-form-label-sm">Window</label>
-                <div class="col-sm-9">
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Window</label>
                   <div class="input-group input-group-sm">
                     <select class="form-control form-control-sm"
                             name="dropAlertsWindow"
@@ -238,10 +224,12 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group row">
-                <label class="col-sm-3 col-form-label col-form-label-sm">Gain
-                  %</label>
-                <div class="col-sm-9">
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Gain %</label>
                   <div class="input-group input-group-sm">
                     <input type="number" class="form-control"
                            name="dropAlertsPercent"
@@ -264,14 +252,15 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group row">
-                <label
-                    class="col-sm-3 col-form-label col-form-label-sm">Volume</label>
-                <div class="col-sm-5">
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Min. 24h Volume</label>
                   <div class="input-group input-group-sm">
                     <input type="number" class="form-control"
                            name="dropAlertsVolume"
-                           [(ngModel)]="config.alerts.gain.volume"
+                           [(ngModel)]="config.alerts.gain.minVolume24"
                            (change)="saveConfig()">
                     <div class="input-group-append">
                       <label
@@ -279,44 +268,33 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-sm-4">
-                  <select class="form-control form-control-sm"
-                          name="dropAlertsVolumeWindow"
-                          [(ngModel)]="config.alerts.gain.volumeRange"
-                          (change)="saveConfig();">
-                    <option>24h</option>
-                  </select>
-                </div>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-12 col-lg">
+      <div class="col-12 col-lg new-alert-config">
         <div class="card">
-          <div class="card-header">
-            Volume Alerts
+          <div class="card-header"
+               [ngClass]="{'bg-primary': config.alerts.volume.enabled}"
+          >
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox"
+                     [(ngModel)]="config.alerts.volume.enabled"
+                     (change)="saveConfig()">
+              <label class="form-check-label">
+                <b>Volume Alerts</b>
+              </label>
+            </div>
           </div>
           <div class="card-body">
-            <form>
-              <div class="form-group row">
-                <button *ngIf="!config.alerts.volume.enabled" type="btn"
-                        class="btn btn-secondary btn-block btn-sm"
-                        (click)="config.alerts.volume.enabled=true; saveConfig();">
-                  Enable
-                </button>
-                <button *ngIf="config.alerts.volume.enabled" type="btn"
-                        class="btn btn-primary btn-block btn-sm"
-                        (click)="config.alerts.volume.enabled=false; saveConfig();">
-                  Enabled
-                </button>
-              </div>
-              <div class="form-group row">
-                <label
-                    class="col-sm-3 col-form-label col-form-label-sm">Window</label>
-                <div class="col-sm-9">
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Window</label>
                   <div class="input-group input-group-sm">
-                    <select class="custom-select" name="dropAlertsWindow"
+                    <select class="custom-select form-control-sm"
+                            name="dropAlertsWindow"
                             (change)="saveConfig();"
                             [(ngModel)]="config.alerts.volume.window">
                       <option>1m</option>
@@ -331,10 +309,12 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group row">
-                <label class="col-sm-3 col-form-label col-form-label-sm">Gain
-                  %</label>
-                <div class="col-sm-9">
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Gain %</label>
                   <div class="input-group input-group-sm">
                     <input type="number" class="form-control"
                            name="dropAlertsPercent"
@@ -357,7 +337,25 @@
                   </div>
                 </div>
               </div>
-            </form>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Min. 24h Volume</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" class="form-control"
+                           name="alertsVolumeMinVolume24"
+                           [(ngModel)]="config.alerts.volume.minVolume24"
+                           (change)="saveConfig()">
+                    <div class="input-group-append">
+                      <label
+                          class="input-group-text">{{config.baseCoin}}</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

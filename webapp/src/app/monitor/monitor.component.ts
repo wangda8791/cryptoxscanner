@@ -106,20 +106,19 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                 enabled: true,
                 window: "15m",
                 percent: 3,
-                volume: 150,
-                volumeRange: "24h",
+                minVolume24: 150,
             },
             gain: {
                 enabled: true,
                 window: "15m",
                 percent: 3,
-                volume: 150,
-                volumeRange: "24h",
+                minVolume24: 150,
             },
             volume: {
                 enabled: true,
                 window: "15m",
                 percent: 7,
+                minVolume24: 150,
             },
         },
 
@@ -508,16 +507,11 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     removeAlert(index: number) {
-        // const alert = this.alertArray[index];
-        // if (this.lastAlerts[alert.type][alert.symbol] == alert) {
-        //     delete(this.lastAlerts[alert.type][alert.symbol]);
-        // }
         this.alertArray.splice(index, 1);
     }
 
     clearAlerts() {
         this.alertArray = [];
-        // this.lastAlerts = {};
     }
 
     private updateGainers() {
@@ -635,7 +629,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (ticker.volume < config.volume) {
+        if (ticker.volume < config.minVolume24) {
             return;
         }
 
@@ -663,7 +657,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (ticker.volume < config.volume) {
+        if (ticker.volume < config.minVolume24) {
             return;
         }
 
@@ -682,6 +676,11 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     private checkVolumeAlert(ticker: SymbolUpdate) {
         const config = this.config.alerts.volume;
         const volumeChangePercent = ticker.volume_change_pct[config.window];
+
+        // Check the minimum 24 hour volume.
+        if (ticker.volume < config.minVolume24) {
+            return;
+        }
 
         if (volumeChangePercent < config.percent) {
             return;
