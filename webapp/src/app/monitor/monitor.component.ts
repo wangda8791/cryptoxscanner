@@ -494,9 +494,10 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         // Remove any alerts over an hour old.
+        const expireTime = 60 * 60 * 1000;
         while (this.alertArray.length > 1) {
             const last = this.alertArray[this.alertArray.length - 1];
-            if (new Date().getTime() - last.timestamp.getTime() > 60000) {
+            if (new Date().getTime() - last.timestamp.getTime() > expireTime) {
                 this.alertArray.pop();
             } else {
                 break;
