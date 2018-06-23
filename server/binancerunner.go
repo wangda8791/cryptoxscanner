@@ -16,8 +16,8 @@
 package server
 
 import (
-	"github.com/crankykernel/cryptoxscanner/pkg"
-	"github.com/crankykernel/cryptoxscanner/pkg/binance"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg/binance"
 	"time"
 	"fmt"
 	"log"

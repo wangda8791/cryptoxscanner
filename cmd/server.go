@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/crankykernel/cryptoxscanner/server"
+	"gitlab.com/crankykernel/cryptoxscanner/server"
 )
 
 var options server.Options

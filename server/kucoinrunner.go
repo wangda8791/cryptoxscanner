@@ -16,8 +16,8 @@
 package server
 
 import (
-	"github.com/crankykernel/cryptoxscanner/pkg/kucoin"
-	"github.com/crankykernel/cryptoxscanner/pkg"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg/kucoin"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"log"
 	"time"
 )

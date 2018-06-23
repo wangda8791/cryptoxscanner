@@ -16,7 +16,7 @@
 package binance
 
 import (
-	"github.com/crankykernel/cryptoxscanner/pkg"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"time"
 	"log"
 	"github.com/crankykernel/cryptotrader/binance"

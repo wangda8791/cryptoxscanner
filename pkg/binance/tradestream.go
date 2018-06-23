@@ -21,7 +21,7 @@ import (
 	"strings"
 	"log"
 	"time"
-	"github.com/crankykernel/cryptoxscanner/pkg"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"sync"
 )
 

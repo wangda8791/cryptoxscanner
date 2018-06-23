@@ -15,7 +15,7 @@
 
 package main
 
-import "github.com/crankykernel/cryptoxscanner/cmd"
+import "gitlab.com/crankykernel/cryptoxscanner/cmd"
 
 func main() {
 	cmd.Execute()
