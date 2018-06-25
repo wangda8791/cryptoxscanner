@@ -3,6 +3,11 @@
 This is the source code for my crypto exchange scanner. Currently
 supported exchanges include Binace and KuCoin.
 
+## Download
+
+Runnable builds can be downloaded from the GitLab CI system:
+https://gitlab.com/crankykernel/cryptoxscanner/-/jobs/artifacts/master/browse?job=build
+
 ## Building
 
 Build the scanner requires:
