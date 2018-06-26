@@ -15,8 +15,17 @@
 
 package main
 
-import "gitlab.com/crankykernel/cryptoxscanner/cmd"
+import (
+	"gitlab.com/crankykernel/cryptoxscanner/cmd"
+	"github.com/inconshreveable/mousetrap"
+	"github.com/spf13/cobra"
+	"os"
+)
 
 func main() {
+	if mousetrap.StartedByExplorer() {
+		cobra.MousetrapHelpText = ""
+		os.Args = append(os.Args, "server")
+	}
 	cmd.Execute()
 }
