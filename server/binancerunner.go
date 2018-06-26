@@ -204,6 +204,11 @@ func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers [
 }
 
 func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {
+
+	if b.tickerStream.Cache == nil {
+		return
+	}
+
 	log.Printf("binance: cache replay start\n")
 	startTime := time.Now()
 	restoreCount := 0

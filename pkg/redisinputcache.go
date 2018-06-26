@@ -46,6 +46,10 @@ func NewRedisInputCache(key string) *RedisInputCache {
 	return &cache
 }
 
+func (c *RedisInputCache) Ping() error {
+	return c.client.Ping().Err()
+}
+
 func (c *RedisInputCache) RPush(buf []byte) {
 	entry := RedisCacheEntry{
 		Timestamp: time.Now().Unix(),

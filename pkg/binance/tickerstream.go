@@ -27,9 +27,15 @@ type TickerStream struct {
 }
 
 func NewTickerStream() *TickerStream {
-	return &TickerStream{
-		Cache: pkg.NewRedisInputCache("binance"),
+	tickerStream := &TickerStream{}
+	cache := pkg.NewRedisInputCache("binance")
+	if err := cache.Ping(); err != nil {
+		log.Printf("Redis not available. Tickers will not be cached.")
+	} else {
+		tickerStream.Cache = cache
 	}
+
+	return tickerStream
 }
 
 func (s *TickerStream) Run(channel chan []pkg.CommonTicker) {
@@ -37,8 +43,10 @@ func (s *TickerStream) Run(channel chan []pkg.CommonTicker) {
 	go NewStreamClient("binance.ticker", "!ticker@arr").Run(inChannel)
 	for {
 		streamMessage := <-inChannel
-		s.CacheAdd(streamMessage.Bytes)
-		s.PruneCache()
+		if s.Cache != nil {
+			s.CacheAdd(streamMessage.Bytes)
+			s.PruneCache()
+		}
 		channel <- s.TransformTickers(streamMessage.Tickers)
 	}
 }

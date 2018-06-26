@@ -90,6 +90,7 @@ func ServerMain(options Options) {
 			log.Printf("error: failed to start debug server: %v\n", err)
 		}
 	}()
+	log.Printf("Starting server on port %d.", options.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", options.Port), router))
 }
 

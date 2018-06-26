@@ -29,9 +29,14 @@ type TickerStream struct {
 }
 
 func NewTickerStream() (*TickerStream) {
+	cache := pkg.NewRedisInputCache("kucoin.tickers.list")
+	if err := cache.Ping(); err != nil {
+		log.Printf("Redis cache not available. KuCoin tickers will not be cached.")
+		cache = nil
+	}
 	return &TickerStream{
 		client: kucoin.NewAnonymousClient(),
-		cache:  pkg.NewRedisInputCache("kucoin.tickers.list"),
+		cache:  cache,
 	}
 }
 
@@ -54,6 +59,9 @@ func (t *TickerStream) toCommonTicker(tickers *kucoin.TickResponse) []pkg.Common
 }
 
 func (t *TickerStream) Cache(tickers *kucoin.TickResponse) {
+	if t.cache == nil {
+		return
+	}
 	t.cache.RPush([]byte(tickers.Raw))
 
 	// Trim the list.
@@ -72,6 +80,9 @@ func (t *TickerStream) Cache(tickers *kucoin.TickResponse) {
 }
 
 func (k *TickerStream) ReplayCache(cb func(tickers []pkg.CommonTicker)) {
+	if k.cache == nil {
+		return
+	}
 	log.Printf("kucoin: cache replay start\n")
 	i := int64(0)
 	for {

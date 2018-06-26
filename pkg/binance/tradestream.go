@@ -32,10 +32,18 @@ type TradeStream struct {
 }
 
 func NewTradeStream() *TradeStream {
-	return &TradeStream{
+	tradeStream := &TradeStream{
 		subscribers: map[chan binance.StreamAggTrade]bool{},
-		cache:       pkg.NewRedisInputCache("binance.trades"),
 	}
+
+	redisCache := pkg.NewRedisInputCache("binance.trades")
+	if err := redisCache.Ping(); err != nil {
+		log.Printf("Redis not available. No trade caching will be done.")
+	} else {
+		tradeStream.cache = redisCache
+	}
+
+	return tradeStream
 }
 
 func (b *TradeStream) Subscribe() chan binance.StreamAggTrade {
@@ -111,12 +119,14 @@ func (b *TradeStream) Run() {
 	cacheChannel := make(chan *binance.StreamAggTrade)
 	tradeChannel := make(chan *binance.StreamAggTrade)
 
-	cacheCount, err := b.cache.Len()
-	if err != nil {
-		log.Printf("error: failed to get Cache len: %v\n", err)
-	}
+	if b.cache != nil {
+		cacheCount, err := b.cache.Len()
+		if err != nil {
+			log.Printf("error: failed to get Cache len: %v\n", err)
+		}
 
-	go b.RestoreFromCache(cacheChannel, cacheCount)
+		go b.RestoreFromCache(cacheChannel, cacheCount)
+	}
 
 	go func() {
 		for {
@@ -203,7 +213,9 @@ func (b *TradeStream) Run() {
 }
 
 func (b *TradeStream) Cache(body []byte) {
-	b.cache.RPush(body)
+	if b.cache != nil {
+		b.cache.RPush(body)
+	}
 }
 
 func (b *TradeStream) PruneCache() {
