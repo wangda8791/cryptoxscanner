@@ -19,7 +19,7 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"time"
 	"log"
-	"github.com/crankykernel/cryptotrader/binance"
+	"gitlab.com/crankykernel/cryptotrader/binance"
 )
 
 type TickerStream struct {

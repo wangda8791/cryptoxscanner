@@ -16,7 +16,7 @@
 package kucoin
 
 import (
-	"github.com/crankykernel/cryptotrader/kucoin"
+	"gitlab.com/crankykernel/cryptotrader/kucoin"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"log"
 	"time"

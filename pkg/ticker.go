@@ -16,9 +16,9 @@
 package pkg
 
 import (
-	"github.com/crankykernel/cryptotrader/binance"
-	"github.com/crankykernel/cryptotrader/kucoin"
-	"github.com/crankykernel/cryptotrader/util"
+	"gitlab.com/crankykernel/cryptotrader/binance"
+	"gitlab.com/crankykernel/cryptotrader/kucoin"
+	"gitlab.com/crankykernel/cryptotrader/util"
 	"time"
 )
 

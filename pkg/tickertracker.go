@@ -18,7 +18,7 @@ package pkg
 import (
 	"math"
 	"time"
-	"github.com/crankykernel/cryptotrader/binance"
+	"gitlab.com/crankykernel/cryptotrader/binance"
 	"log"
 	"sync"
 )
