@@ -18,10 +18,10 @@ package server
 import (
 	"github.com/gorilla/websocket"
 	"net/http"
-	"log"
 	"encoding/json"
 	"sync"
 	"strings"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 var wsConnectionTracker *WsConnectionTracker

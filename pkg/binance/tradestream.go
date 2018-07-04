@@ -19,10 +19,10 @@ import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"fmt"
 	"strings"
-	"log"
 	"time"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"sync"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type TradeStream struct {
@@ -136,11 +136,11 @@ func (b *TradeStream) Run() {
 				var err error
 				streams, err = b.GetStreams()
 				if err != nil {
-					log.Printf("binance: failed to get streams: %v\n", err)
+					log.Printf("binance: failed to get streams: %v", err)
 					goto TryAgain
 				}
 				if len(streams) == 0 {
-					log.Printf("binance: got 0 streams, trying again\n", len(streams))
+					log.Printf("binance: got 0 streams, trying again")
 					goto TryAgain
 				}
 				log.Printf("binance: got %d streams\n", len(streams))

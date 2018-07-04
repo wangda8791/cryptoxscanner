@@ -20,10 +20,10 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/binance"
 	"time"
 	"fmt"
-	"log"
 	"sync"
 	"runtime"
 	"math"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type BinanceRunner struct {

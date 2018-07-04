@@ -19,8 +19,8 @@ import (
 	"math"
 	"time"
 	"gitlab.com/crankykernel/cryptotrader/binance"
-	"log"
 	"sync"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type Aggregate struct {

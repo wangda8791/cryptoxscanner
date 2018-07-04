@@ -18,9 +18,9 @@ package kucoin
 import (
 	"gitlab.com/crankykernel/cryptotrader/kucoin"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"log"
 	"time"
 	"encoding/json"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type TickerStream struct {

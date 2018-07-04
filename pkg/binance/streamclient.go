@@ -17,9 +17,9 @@ package binance
 
 import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
-	"log"
 	"time"
 	"encoding/json"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type StreamClient struct {

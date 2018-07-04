@@ -18,8 +18,8 @@ package server
 import (
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/kucoin"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"log"
 	"time"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 func KuCoinRunner(ws *TickerWebSocketHandler) {

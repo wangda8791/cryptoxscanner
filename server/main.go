@@ -16,7 +16,6 @@
 package server
 
 import (
-	"log"
 	"time"
 	"net/http"
 	"encoding/json"
@@ -29,6 +28,7 @@ import (
 	"math/rand"
 	_ "net/http/pprof"
 	"github.com/gobuffalo/packr"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 var salt []byte

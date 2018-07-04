@@ -18,12 +18,12 @@ package binance
 import (
 	"net/http"
 	"fmt"
-	"log"
 	"io"
 	"time"
 	"bytes"
 	"io/ioutil"
 	"sync"
+	"gitlab.com/crankykernel/cryptoxscanner/log"
 )
 
 type proxyCacheEntry struct {
