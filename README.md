@@ -10,9 +10,27 @@ https://gitlab.com/crankykernel/cryptoxscanner/-/jobs/artifacts/master/browse?jo
 
 ## Building
 
-Build the scanner requires:
-- A working Go 1.10+ installation.
-- A working Node.js v8.10+ installation.
+Before building _cryptoxscanner_ you must install Go and Node:
+- Node 8.11.3+
+- Go 1.10.3+
+As Cgo is used, you will also need a gcc/clang installed.
+
+Also, $GOAPTH/bin must be in your PATH.
+
+1. From the top of the source tree run:
+
+		make install-deps
+
+	This command will:
+	- In webapp into npm dependencies: `npm install`.
+	- In the top level directory, install the Go dependencies.
+
+2. In the top level directory run:
+
+		make
+
+	This will produce the *cryptoxscanner* binary in the current
+    directory with the web application resources bundled into it.
 
 ## License
 
