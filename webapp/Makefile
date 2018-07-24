@@ -7,9 +7,6 @@ update-version:
 	cp ../VERSION.PROTO src/assets/VERSION.PROTO
 	cp ../VERSION.UI src/assets/VERSION.UI
 
-serve:
-	./node_modules/.bin/ng serve
-
 clean:
 	rm -f src/assets/VERSION.PROTO src/assets/VERSION.UI
 	rm -rf dist

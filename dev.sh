@@ -5,4 +5,7 @@
 #    go get github.com/cespare/reflex
 #
 
-exec reflex -r '\.go$' -s -- sh -c "go build && ./cryptoxscanner server"
+trap 'echo "Killing background jobs..."; kill $(jobs -p)' EXIT
+
+(cd webapp && npm start) &
+reflex -r '\.go$' -s -- sh -c "go build && ./cryptoxscanner server"
