@@ -8,4 +8,4 @@
 trap 'echo "Killing background jobs..."; kill $(jobs -p)' EXIT
 
 (cd webapp && npm start) &
-reflex -r '\.go$' -s -- sh -c "go build && ./cryptoxscanner server"
+reflex -r '\.go$' -s -- sh -c "CGO_ENABLED=1 go build --tags json1 && ./cryptoxscanner server"
