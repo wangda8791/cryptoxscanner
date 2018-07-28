@@ -20,28 +20,26 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"sync"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
 )
 
 type TradeStream struct {
 	subscribers map[chan binance.StreamAggTrade]bool
-	cache       *pkg.RedisInputCache
 	lock        sync.RWMutex
+	cache       *db.GenericCache
 }
 
 func NewTradeStream() *TradeStream {
 	tradeStream := &TradeStream{
 		subscribers: map[chan binance.StreamAggTrade]bool{},
 	}
-
-	redisCache := pkg.NewRedisInputCache("binance.trades")
-	if err := redisCache.Ping(); err != nil {
-		log.Printf("Redis not available. No trade caching will be done.")
-	} else {
-		tradeStream.cache = redisCache
+	cache, err := db.OpenGenericCache("binance-cache")
+	if err != nil {
+		log.WithError(err).Errorf("Failed to open generic cache for Binances trades.")
 	}
+	tradeStream.cache = cache
 
 	return tradeStream
 }
@@ -60,50 +58,47 @@ func (b *TradeStream) Unsubscribe(channel chan binance.StreamAggTrade) {
 	delete(b.subscribers, channel)
 }
 
-func (b *TradeStream) RestoreFromCache(channel chan *binance.StreamAggTrade, count int64) {
+func (b *TradeStream) RestoreFromCache(channel chan *binance.StreamAggTrade) {
 	i := int64(0)
 	start := time.Now()
 	first := time.Time{}
 	last := time.Time{}
 
-	log.Printf("binance trade Cache: restoring %d Cache entries\n", count)
+	rows, err := b.cache.QueryAgeLessThan("trade", 3600 * 2)
+	if err != nil {
+		log.WithError(err).Error("Failed to restore trades from database.")
+	} else {
+		count := 0
+		trades := [][]byte{}
 
-	for {
-		next, err := b.cache.GetN(i)
-		if err != nil {
-			log.Printf("error: redis: %v", err)
-			break
-		}
-		if next == nil {
-			if i < count {
-				log.Printf("error: only restored %d trades, requested %d\n",
-					i, count)
+		for rows.Next() {
+			var data []byte
+			if err := rows.Scan(&data); err != nil {
+				log.WithError(err).Error("Failed to scan row from database.")
+				continue
 			}
-			break
-		}
-		i += 1
-
-		if next.Timestamp == 0 {
-			log.Printf("error: redis: Cache entry with 0 timestamp\n")
-			continue
+			trades = append(trades, data)
 		}
 
-		aggTrade, err := b.DecodeTrade([]byte(next.Message))
-		if err != nil {
-			log.Printf("error: failed to decode aggTrade from redis Cache: %v\n", err)
-			continue
-		}
-		last = aggTrade.Timestamp()
+		for _, data := range trades {
+			aggTrade, err := b.DecodeTrade(data)
+			if err != nil {
+				log.WithError(err).
+					WithField("data", string(data)).
+					Error("Failed to decode trade from database.")
+				continue
+			}
 
-		if first.IsZero() {
-			first = aggTrade.Timestamp()
-		}
+			if first.IsZero() {
+				first = aggTrade.Timestamp()
+			}
+			last = aggTrade.Timestamp()
 
-		channel <- aggTrade
+			channel <- aggTrade
 
-		if i == count {
-			break
+			count += 1
 		}
+		log.Infof("Restored %d Binance trades from database.", count)
 	}
 
 	restoreDuration := time.Now().Sub(start)
@@ -119,14 +114,7 @@ func (b *TradeStream) Run() {
 	cacheChannel := make(chan *binance.StreamAggTrade)
 	tradeChannel := make(chan *binance.StreamAggTrade)
 
-	if b.cache != nil {
-		cacheCount, err := b.cache.Len()
-		if err != nil {
-			log.Printf("error: failed to get Cache len: %v\n", err)
-		}
-
-		go b.RestoreFromCache(cacheChannel, cacheCount)
-	}
+	go b.RestoreFromCache(cacheChannel)
 
 	go func() {
 		for {
@@ -162,13 +150,13 @@ func (b *TradeStream) Run() {
 					break ReadLoop
 				}
 
-				b.Cache(body)
-
 				trade, err := b.DecodeTrade(body)
 				if err != nil {
 					log.Printf("binance: failed to decode trade feed: %v\n", err)
 					goto ReadLoop
 				}
+
+				b.cache.AddItem(trade.Timestamp(), "trade", body)
 
 				tradeChannel <- trade
 			}
@@ -205,31 +193,10 @@ func (b *TradeStream) Run() {
 				tradeQueue = []*binance.StreamAggTrade{}
 			}
 			b.Publish(trade)
-			b.PruneCache()
 		}
 	}
 
 	log.Printf("binance: trade feed exiting.\n")
-}
-
-func (b *TradeStream) Cache(body []byte) {
-	if b.cache != nil {
-		b.cache.RPush(body)
-	}
-}
-
-func (b *TradeStream) PruneCache() {
-	for {
-		next, err := b.cache.GetFirst()
-		if err != nil {
-			break
-		}
-		if time.Now().Sub(time.Unix(next.Timestamp, 0)) > time.Hour * 2{
-			b.cache.LRemove()
-		} else {
-			break
-		}
-	}
 }
 
 func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
