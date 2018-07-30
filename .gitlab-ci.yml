@@ -4,6 +4,7 @@ before_script:
   # Install required system packages.
   - yum -y install epel-release
   - yum -y install git make zip mingw64-gcc mingw32-gcc
+  - yum -y install gcc
 
   # Copy the project into the GOPATH.
   # - mkdir -p /go/src/gitlab.com/crankykernel/cryptoxscanner
