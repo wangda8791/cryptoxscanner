@@ -18,25 +18,25 @@ package kucoin
 import (
 	"gitlab.com/crankykernel/cryptotrader/kucoin"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"time"
 	"encoding/json"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
+	"time"
 )
 
 type TickerStream struct {
-	client *kucoin.Client
-	cache  *pkg.RedisInputCache
+	client   *kucoin.Client
+	cache    *db.GenericCache
 }
 
 func NewTickerStream() (*TickerStream) {
-	cache := pkg.NewRedisInputCache("kucoin.tickers.list")
-	if err := cache.Ping(); err != nil {
-		log.Printf("Redis cache not available. KuCoin tickers will not be cached.")
-		cache = nil
+	cache, err := db.OpenGenericCache("kucoin")
+	if err != nil {
+		log.WithError(err).Errorf("Failed to open cache: kucoin.")
 	}
 	return &TickerStream{
-		client: kucoin.NewAnonymousClient(),
-		cache:  cache,
+		client:   kucoin.NewAnonymousClient(),
+		cache:    cache,
 	}
 }
 
@@ -59,48 +59,36 @@ func (t *TickerStream) toCommonTicker(tickers *kucoin.TickResponse) []pkg.Common
 }
 
 func (t *TickerStream) Cache(tickers *kucoin.TickResponse) {
-	if t.cache == nil {
-		return
-	}
-	t.cache.RPush([]byte(tickers.Raw))
-
-	// Trim the list.
-	for {
-		entry, err := t.cache.GetFirst()
-		if err != nil {
-			log.Printf("error: failed to get redis cache entry: %v\n", err)
-			break
-		}
-		if time.Now().Sub(time.Unix(entry.Timestamp, 0)) > time.Hour {
-			t.cache.LRemove()
-		} else {
-			break
-		}
-	}
+	t.cache.AddItem(tickers.GetTimestamp(), "tickers", []byte(tickers.Raw))
 }
 
 func (k *TickerStream) ReplayCache(cb func(tickers []pkg.CommonTicker)) {
-	if k.cache == nil {
+	start := time.Now()
+	count := 0
+	rows, err := k.cache.QueryAgeLessThan("tickers", 3600)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to load cached tickers for KuCoin.")
 		return
 	}
-	log.Printf("kucoin: cache replay start\n")
-	i := int64(0)
-	for {
-		cacheEntry, err := k.cache.GetN(i)
-		if err != nil {
-			log.Printf("error: failed to get redis cache entry %d: %v\n",
-				i, err)
+	for rows.Next() {
+		var data []byte
+		if err := rows.Scan(&data); err != nil {
+			log.WithError(err).Errorf("Failed to scan row.")
+			continue
 		}
-		if cacheEntry == nil {
-			break
-		}
+
 		var response kucoin.TickResponse
-		if err := json.Unmarshal([]byte(cacheEntry.Message), &response); err != nil {
-			log.Printf("error: failed to decode kucoin ticker cache entry: %v\n", err)
+		if err := json.Unmarshal(data, &response); err != nil {
+			log.WithError(err).Errorf("Failed to unmarshal cached KuCoin ticker.")
 			continue
 		}
 		cb(k.toCommonTicker(&response))
-		i += 1
+
+		count += 1
 	}
-	log.Printf("kucoin: cache replay done: ticks: %d\n", i)
+
+	log.WithFields(log.Fields{
+		"duration": time.Now().Sub(start),
+		"count": count,
+	}).Infof("KuCoin ticker cache reload complete.")
 }

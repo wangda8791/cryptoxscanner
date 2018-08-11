@@ -38,7 +38,7 @@ func KuCoinRunner(ws *TickerWebSocketHandler) {
 
 		tickers, err := tickerStream.GetTickers()
 		if err != nil {
-			log.Printf("error: failed to get kucoin tickers: %v, err")
+			log.WithError(err).Errorf("Failed to get KuCoin tickers.")
 			goto TryAgain
 		}
 
