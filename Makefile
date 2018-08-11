@@ -5,6 +5,8 @@ VERSION ?=	$(shell git rev-parse --abbrev-ref HEAD)
 CGO_ENABLED :=	1
 TAGS :=		json1
 
+LDFLAGS :=	-w -s
+
 .PHONY:		dist
 
 all: build
@@ -13,7 +15,7 @@ build:
 	./update-proto-version.py
 	cd webapp && make
 	packr -z
-	go build -ldflags "-w -s"
+	go build --tags "$(TAGS)" -ldflags "$(LDFLAGS)"
 
 install-deps:
 	$(MAKE) -C webapp $@
@@ -41,5 +43,6 @@ dist:
 	cd webapp && $(MAKE)
 	packr -z
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) \
-		go build --tags "$(TAGS)" -o dist/$(OUTDIR)/$(OUTBIN)
+		go build --tags "$(TAGS)" --ldflags "$(LDFLAGS)" \
+			-o dist/$(OUTDIR)/$(OUTBIN)
 	(cd dist && zip -r $(OUTDIR).zip $(OUTDIR))
