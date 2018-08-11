@@ -38,8 +38,9 @@ func NewTradeStream() *TradeStream {
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
 		log.WithError(err).Errorf("Failed to open generic cache for Binances trades.")
+	} else {
+		tradeStream.cache = cache
 	}
-	tradeStream.cache = cache
 
 	return tradeStream
 }
@@ -173,13 +174,13 @@ func (b *TradeStream) Run() {
 				cacheDone = true
 			} else {
 				if cacheDone {
-					log.Printf("warning: got cached trade in state Cache done\n")
+					log.Printf("warning: got cached trade in state oldCache done\n")
 				}
 				b.Publish(trade)
 			}
 		case trade := <-tradeChannel:
 			if !cacheDone {
-				// The Cache is still being processed. Queue.
+				// The oldCache is still being processed. Queue.
 				tradeQueue = append(tradeQueue, trade)
 				continue
 			}

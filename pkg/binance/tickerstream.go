@@ -20,19 +20,20 @@ import (
 	"time"
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
 )
 
 type TickerStream struct {
-	Cache *pkg.RedisInputCache
+	cache *db.GenericCache
 }
 
 func NewTickerStream() *TickerStream {
 	tickerStream := &TickerStream{}
-	cache := pkg.NewRedisInputCache("binance")
-	if err := cache.Ping(); err != nil {
-		log.Printf("Redis not available. Tickers will not be cached.")
+	cache, err := db.OpenGenericCache("binance-cache")
+	if err != nil {
+		log.WithError(err).Errorf("Failed to open generic cache for Binance tickers.")
 	} else {
-		tickerStream.Cache = cache
+		tickerStream.cache = cache
 	}
 
 	return tickerStream
@@ -43,31 +44,13 @@ func (s *TickerStream) Run(channel chan []pkg.CommonTicker) {
 	go NewStreamClient("binance.ticker", "!ticker@arr").Run(inChannel)
 	for {
 		streamMessage := <-inChannel
-		if s.Cache != nil {
-			s.CacheAdd(streamMessage.Bytes)
-			s.PruneCache()
-		}
+		s.CacheAdd(streamMessage.Bytes)
 		channel <- s.TransformTickers(streamMessage.Tickers)
 	}
 }
 
 func (s *TickerStream) CacheAdd(body []byte) {
-	s.Cache.RPush(body)
-}
-
-func (s *TickerStream) PruneCache() {
-	for {
-		next, err := s.Cache.GetFirst()
-		if err != nil {
-			log.Printf("error: binance ticker stream: failed to read from redis: %v\n", err)
-			break
-		}
-		if time.Now().Sub(time.Unix(next.Timestamp, 0)) > time.Hour {
-			s.Cache.LRemove()
-		} else {
-			break
-		}
-	}
+	s.cache.AddItem(time.Now(), "ticker", body)
 }
 
 func (s *TickerStream) TransformTickers(inTickers []binance.Stream24Ticker) []pkg.CommonTicker {
@@ -94,4 +77,38 @@ func (s *TickerStream) DecodeTickers(buf []byte) ([]pkg.CommonTicker, error) {
 	}
 
 	return tickers, nil
+}
+
+func (b *TickerStream) LoadCache() [][]pkg.CommonTicker {
+	tickers := [][]pkg.CommonTicker{}
+
+	rows, err := b.cache.QueryAgeLessThan("ticker", 3600)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to query ticker cache.")
+	} else {
+		entries := [][]byte{}
+		for rows.Next() {
+			var data []byte
+			if err := rows.Scan(&data); err != nil {
+				log.WithError(err).Errorf("Failed to scan row.")
+				continue
+			}
+			entries = append(entries, data)
+		}
+
+		for _, ticker := range entries {
+			decoded, err := b.DecodeTickers(ticker)
+			if err != nil {
+				log.WithError(err).Errorf("Failed to decode Binance ticker.")
+				continue
+			}
+			if len(decoded) == 0 {
+				log.Warnf("Decoded Binance ticker contains 0 items.")
+				continue
+			}
+			tickers = append(tickers, decoded)
+		}
+	}
+
+	return tickers
 }

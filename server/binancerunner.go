@@ -205,49 +205,16 @@ func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers [
 
 func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {
 
-	if b.tickerStream.Cache == nil {
-		return
-	}
-
-	log.Printf("binance: cache replay start\n")
 	startTime := time.Now()
 	restoreCount := 0
 
-	skipCount := 0
-
-	for i := int64(0); ; i++ {
-		entry, err := b.tickerStream.Cache.GetN(i)
-		if err != nil {
-			log.Printf("error: failed to load ticker cache entry %d: %v",
-				i, err)
-			break
-		}
-		if entry == nil {
-			break
-		}
-
-		// Skip if over an hour old.
-		if time.Now().Sub(time.Unix(entry.Timestamp, 0)) > time.Hour*1 {
-			skipCount++
-			continue
-		}
-
-		tickers, err := b.tickerStream.DecodeTickers([]byte(entry.Message))
-		if err != nil {
-			log.Printf("error: failed to decode cached tickers: %v\n", err)
-			continue
-		}
-		if len(tickers) == 0 {
-			log.Printf("warning: decoded 0 length tickers\n")
-			continue
-		}
-
-		b.updateTrackers(trackers, tickers, false)
-
-		restoreCount++
+	cachedTickers := b.tickerStream.LoadCache()
+	for _, cachedTicker := range cachedTickers {
+		b.updateTrackers(trackers, cachedTicker, false)
+		restoreCount += 1
 	}
 
 	duration := time.Now().Sub(startTime)
-	log.Printf("binance: cache replay done: %d records: duration: %v; skipped: %d\n",
-		restoreCount, duration, skipCount)
+	log.Infof("binance: cache replay done: %d records: duration: %v\n",
+		restoreCount, duration)
 }
