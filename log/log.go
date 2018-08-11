@@ -145,6 +145,17 @@ func Info(v ...interface{}) {
 	}
 }
 
+func Warnf(format string, v ...interface{}) {
+	if logLevel == logrus.DebugLevel {
+		_, filename, line, _ := runtime.Caller(1)
+		logrus.WithFields(Fields{
+			"_source": fmt.Sprintf("%s:%d", filepath.Base(filename), line),
+		}).Warnf(format, v...)
+	} else {
+		logrus.Warnf(format, v...)
+	}
+}
+
 func Errorf(format string, v ...interface{}) {
 	if logLevel == logrus.DebugLevel {
 		_, filename, line, _ := runtime.Caller(1)
