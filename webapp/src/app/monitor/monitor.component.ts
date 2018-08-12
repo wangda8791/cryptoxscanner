@@ -102,23 +102,29 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         alerts: {
             desktopNotifications: false,
             sound: false,
+
             drop: {
                 enabled: true,
                 window: "15m",
                 percent: 3,
                 minVolume24: 150,
+                minPrice: 0,
             },
+
             gain: {
                 enabled: true,
                 window: "15m",
                 percent: 3,
                 minVolume24: 150,
+                minPrice: 0,
             },
+
             volume: {
                 enabled: true,
                 window: "15m",
                 percent: 7,
                 minVolume24: 150,
+                minPrice: 0,
             },
         },
 
@@ -621,6 +627,13 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         const config = this.config.alerts.drop;
         const priceChangePercent = ticker.price_change_pct[config.window];
 
+        const minPrice = +config.minPrice;
+        if (!isNaN(minPrice)) {
+            if (ticker.close < minPrice) {
+                return;
+            }
+        }
+
         if (priceChangePercent >= 0) {
             return;
         }
@@ -649,6 +662,13 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         const config = this.config.alerts.gain;
         const priceChangePercent = ticker.price_change_pct[config.window];
 
+        const minPrice = +config.minPrice;
+        if (!isNaN(minPrice)) {
+            if (ticker.close < minPrice) {
+                return;
+            }
+        }
+
         if (priceChangePercent <= 0) {
             return;
         }
@@ -676,6 +696,13 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     private checkVolumeAlert(ticker: SymbolUpdate) {
         const config = this.config.alerts.volume;
         const volumeChangePercent = ticker.volume_change_pct[config.window];
+
+        const minPrice = +config.minPrice;
+        if (!isNaN(minPrice)) {
+            if (ticker.close < minPrice) {
+                return;
+            }
+        }
 
         // Check the minimum 24 hour volume.
         if (ticker.volume < config.minVolume24) {
@@ -712,6 +739,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                 return (a[field] - b[field]) * rev;
         }
     }
+
 }
 
 @Component({
