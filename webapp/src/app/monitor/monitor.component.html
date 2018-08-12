@@ -425,6 +425,27 @@
       </div>
 
     </div>
+
+    <div class="row">
+      <div class="col">
+
+        <div class="card">
+          <div class="card-header">
+            <b>Blacklist</b>
+          </div>
+          <div class="card-body">
+            <input type="text"
+                   class="form-control"
+                   [(ngModel)]="config.blacklist"
+                   (change)="saveConfig()"
+                   placeholder="Blacklist...">
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <br/>
+
   </div>
   <!-- -->
 

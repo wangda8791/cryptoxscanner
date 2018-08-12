@@ -99,6 +99,8 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     config: any = {
         baseCoin: DEFAULT_BASE_COIN,
 
+        blacklist: "",
+
         alerts: {
             desktopNotifications: false,
             sound: false,
@@ -430,6 +432,11 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
 
         const tickers: SymbolUpdate[] = update.tickers;
 
+        const blacklist = this.config.blacklist.split(/[\s,]/)
+                .filter((e) => {
+                    return e.length > 0;
+                });
+
         // Map the tickers by symbol. Not all updates contain all tickers,
         // so this keeps a stable set of tickers for sorting on.
         for (let i = 0, n = tickers.length; i < n; i++) {
@@ -437,6 +444,17 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
 
             // Filter out coins not in the selected base pair.
             if (!ticker.symbol.endsWith(this.config.baseCoin)) {
+                continue;
+            }
+
+            let skip = false;
+            for (const symbol of blacklist) {
+                if (symbol.toLowerCase() == ticker.symbol.toLowerCase()) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) {
                 continue;
             }
 
