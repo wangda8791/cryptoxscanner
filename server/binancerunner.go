@@ -27,8 +27,8 @@ import (
 )
 
 type BinanceRunner struct {
-	trackers  *pkg.TickerTrackerMap
-	websocket *TickerWebSocketHandler
+	trackers    *pkg.TickerTrackerMap
+	websocket   *TickerWebSocketHandler
 	subscribers map[string]map[chan interface{}]bool
 	tickerStream *binance.TickerStream
 }
@@ -66,9 +66,9 @@ func (b *BinanceRunner) Run() {
 	binanceTradeStream := binance.NewTradeStream()
 	go binanceTradeStream.Run()
 
-	tickerChannel := make(chan []pkg.CommonTicker)
 	b.tickerStream = binance.NewTickerStream()
-	go b.tickerStream.Run(tickerChannel)
+	binanceTickerChannel := b.tickerStream.Subscribe()
+	go b.tickerStream.Run()
 
 	tradeChannel := binanceTradeStream.Subscribe()
 
@@ -92,7 +92,7 @@ func (b *BinanceRunner) Run() {
 
 				tradeCount++
 
-			case tickers := <-tickerChannel:
+			case tickers := <-binanceTickerChannel:
 
 				waitTime := time.Now().Sub(loopStartTime)
 				if len(tickers) == 0 {

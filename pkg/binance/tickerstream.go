@@ -21,14 +21,19 @@ import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
+	"sync"
 )
 
 type TickerStream struct {
-	cache *db.GenericCache
+	subscribers map[chan []pkg.CommonTicker]bool
+	cache       *db.GenericCache
+	lock        sync.RWMutex
 }
 
 func NewTickerStream() *TickerStream {
-	tickerStream := &TickerStream{}
+	tickerStream := &TickerStream{
+		subscribers: map[chan []pkg.CommonTicker]bool{},
+	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
 		log.WithError(err).Errorf("Failed to open generic cache for Binance tickers.")
@@ -39,13 +44,35 @@ func NewTickerStream() *TickerStream {
 	return tickerStream
 }
 
-func (s *TickerStream) Run(channel chan []pkg.CommonTicker) {
+func (b *TickerStream) Subscribe() chan []pkg.CommonTicker {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	channel := make(chan []pkg.CommonTicker)
+	b.subscribers[channel] = true
+	return channel
+}
+
+func (b *TickerStream) Unsubscribe(channel chan []pkg.CommonTicker) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	delete(b.subscribers, channel)
+}
+
+func (b *TickerStream) Publish(tickers []pkg.CommonTicker) {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	for subscriber := range b.subscribers {
+		subscriber <- tickers
+	}
+}
+
+func (s *TickerStream) Run() {
 	inChannel := make(chan *binance.CombinedStreamMessage)
 	go NewStreamClient("binance.ticker", "!ticker@arr").Run(inChannel)
 	for {
 		streamMessage := <-inChannel
 		s.CacheAdd(streamMessage.Bytes)
-		channel <- s.TransformTickers(streamMessage.Tickers)
+		s.Publish(s.TransformTickers(streamMessage.Tickers))
 	}
 }
 
