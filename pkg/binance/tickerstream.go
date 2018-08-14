@@ -68,7 +68,6 @@ func (b *TickerStream) Publish(tickers []pkg.CommonTicker) {
 			case channel <- next:
 				queue = queue[1:]
 			default:
-				queue = append(queue, tickers)
 				goto Next
 			}
 		}

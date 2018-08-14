@@ -25,15 +25,19 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
 )
 
+type StreamAggTrade = binance.StreamAggTrade
+
+type tradeStreamSubscriberQueue []binance.StreamAggTrade
+
 type TradeStream struct {
-	subscribers map[chan binance.StreamAggTrade]bool
+	subscribers map[chan binance.StreamAggTrade]tradeStreamSubscriberQueue
 	lock        sync.RWMutex
 	cache       *db.GenericCache
 }
 
 func NewTradeStream() *TradeStream {
 	tradeStream := &TradeStream{
-		subscribers: map[chan binance.StreamAggTrade]bool{},
+		subscribers: map[chan binance.StreamAggTrade]tradeStreamSubscriberQueue{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -48,8 +52,8 @@ func NewTradeStream() *TradeStream {
 func (b *TradeStream) Subscribe() chan binance.StreamAggTrade {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan binance.StreamAggTrade)
-	b.subscribers[channel] = true
+	channel := make(chan binance.StreamAggTrade, 1024)
+	b.subscribers[channel] = tradeStreamSubscriberQueue{}
 	return channel
 }
 
@@ -59,19 +63,12 @@ func (b *TradeStream) Unsubscribe(channel chan binance.StreamAggTrade) {
 	delete(b.subscribers, channel)
 }
 
-func (b *TradeStream) RestoreFromCache(channel chan *binance.StreamAggTrade) {
-	i := int64(0)
-	start := time.Now()
-	first := time.Time{}
-	last := time.Time{}
-
-	rows, err := b.cache.QueryAgeLessThan("trade", 3600 * 2)
+func (b *TradeStream) RestoreCache(cb func(*binance.StreamAggTrade)) {
+	rows, err := b.cache.QueryAgeLessThan("trade", 3600*2)
 	if err != nil {
 		log.WithError(err).Error("Failed to restore trades from database.")
 	} else {
-		count := 0
 		trades := [][]byte{}
-
 		for rows.Next() {
 			var data []byte
 			if err := rows.Scan(&data); err != nil {
@@ -89,33 +86,13 @@ func (b *TradeStream) RestoreFromCache(channel chan *binance.StreamAggTrade) {
 					Error("Failed to decode trade from database.")
 				continue
 			}
-
-			if first.IsZero() {
-				first = aggTrade.Timestamp()
-			}
-			last = aggTrade.Timestamp()
-
-			channel <- aggTrade
-
-			count += 1
+			cb(aggTrade)
 		}
-		log.Infof("Restored %d Binance trades from database.", count)
 	}
-
-	restoreDuration := time.Now().Sub(start)
-	restoreRange := last.Sub(first)
-	log.Printf("binance trades: restored %d trades in %v; range=%v\n",
-		i, restoreDuration, restoreRange)
-
-	channel <- nil
 }
 
 func (b *TradeStream) Run() {
-
-	cacheChannel := make(chan *binance.StreamAggTrade)
 	tradeChannel := make(chan *binance.StreamAggTrade)
-
-	go b.RestoreFromCache(cacheChannel)
 
 	go func() {
 		for {
@@ -165,34 +142,9 @@ func (b *TradeStream) Run() {
 		}
 	}()
 
-	cacheDone := false
-	tradeQueue := []*binance.StreamAggTrade{}
 	for {
 		select {
-		case trade := <-cacheChannel:
-			if trade == nil {
-				cacheDone = true
-			} else {
-				if cacheDone {
-					log.Printf("warning: got cached trade in state oldCache done\n")
-				}
-				b.Publish(trade)
-			}
 		case trade := <-tradeChannel:
-			if !cacheDone {
-				// The oldCache is still being processed. Queue.
-				tradeQueue = append(tradeQueue, trade)
-				continue
-			}
-
-			if len(tradeQueue) > 0 {
-				log.Printf("binace trade stream: submitting %d queued trades\n",
-					len(tradeQueue))
-				for _, trade := range tradeQueue {
-					b.Publish(trade)
-				}
-				tradeQueue = []*binance.StreamAggTrade{}
-			}
 			b.Publish(trade)
 		}
 	}
@@ -203,8 +155,26 @@ func (b *TradeStream) Run() {
 func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
-	for subscriber := range b.subscribers {
-		subscriber <- *trade
+	for channel, queue := range b.subscribers {
+
+		// Process queued items.
+		for len(queue) > 0 {
+			next := queue[0]
+			select {
+			case channel <- next:
+				queue = queue[1:]
+			default:
+				goto Next;
+			}
+		}
+
+		select {
+		case channel <- *trade:
+		default:
+			queue = append(queue, *trade)
+		}
+	Next:
+		b.subscribers[channel] = queue
 	}
 }
 

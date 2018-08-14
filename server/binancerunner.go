@@ -63,16 +63,42 @@ func (b *BinanceRunner) Unsubscribe(symbol string, channel chan interface{}) {
 func (b *BinanceRunner) Run() {
 	lastUpdate := time.Now()
 
+	// Create and start the trade stream.
 	binanceTradeStream := binance.NewTradeStream()
 	go binanceTradeStream.Run()
 
+	// Subscribe to the trade stream. This will start queuing trades
+	// until the cache is done loading.
+	tradeChannel := binanceTradeStream.Subscribe()
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		count := 0
+		binanceTradeStream.RestoreCache(func(trade *binance.StreamAggTrade) {
+			ticker := b.trackers.GetTracker(trade.Symbol)
+			ticker.AddTrade(*trade)
+			count += 1
+		})
+		log.Infof("Restored %d Binance trades from cache.", count)
+		wg.Done()
+	}()
+
+	// Create, subscribe to and start the ticker stream.
 	b.tickerStream = binance.NewTickerStream()
 	binanceTickerChannel := b.tickerStream.Subscribe()
 	go b.tickerStream.Run()
 
-	tradeChannel := binanceTradeStream.Subscribe()
+	// Restore the ticker stream cache.
+	wg.Add(1)
+	go func() {
+		b.reloadStateFromRedis(b.trackers)
+		wg.Done()
+	}()
 
-	b.reloadStateFromRedis(b.trackers)
+	// Wait for cache restores to complete.
+	wg.Wait()
 
 	go func() {
 		tradeCount := 0
@@ -204,8 +230,7 @@ func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers [
 }
 
 func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {
-
-	startTime := time.Now()
+	log.Infof("Restoring Binance ticks from cache.")
 	restoreCount := 0
 
 	cachedTickers := b.tickerStream.LoadCache()
@@ -214,7 +239,5 @@ func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {
 		restoreCount += 1
 	}
 
-	duration := time.Now().Sub(startTime)
-	log.Infof("binance: cache replay done: %d records: duration: %v\n",
-		restoreCount, duration)
+	log.Infof("Restored %d Binance ticks from cache.", restoreCount)
 }
