@@ -1,0 +1,9 @@
+@import "~toastr/build/toastr.css";
+@import "~bootstrap/scss/bootstrap";
+
+@import "./common";
+
+.navbar {
+  @extend .navbar-light;
+  @extend .bg-light;
+}

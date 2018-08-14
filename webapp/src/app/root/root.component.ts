@@ -31,6 +31,18 @@ export class RootComponent implements OnInit {
                 private http: HttpClient) {
     }
 
+    ngOnInit() {
+        this.checkProtoVersion();
+        setInterval(() => {
+            this.checkProtoVersion();
+        }, 60000);
+
+        this.checkUiVersion();
+        this.uiVersionInterval = setInterval(() => {
+            this.checkUiVersion();
+        }, 60000);
+    }
+
     private checkProtoVersion() {
         this.tokenFxApi.ping().subscribe((response) => {
             if (response.version != this.tokenFxApi.PROTO_VERSION) {
@@ -83,15 +95,9 @@ export class RootComponent implements OnInit {
         });
     }
 
-    ngOnInit() {
-        this.checkProtoVersion();
-        setInterval(() => {
-            this.checkProtoVersion();
-        }, 60000);
-
-        this.checkUiVersion();
-        this.uiVersionInterval = setInterval(() => {
-            this.checkUiVersion();
-        }, 60000);
+    setTheme(name: string) {
+        localStorage.setItem("theme", name);
+        toastr.info(`<a href="javascript:window.location.href=window.location.href"
+                     type="button" class="btn btn-primary btn-block">Reload to apply theme.</a>`);
     }
 }

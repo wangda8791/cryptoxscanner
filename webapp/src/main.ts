@@ -24,11 +24,34 @@ import "bootstrap";
 
 import * as toastr from "toastr";
 
+declare function require(name: string);
+
+function loadTheme() {
+    const requireStyles = () => {
+        const themeName = localStorage.getItem("theme");
+        switch (themeName) {
+            case "dark":
+                return require("./styles/theme-dark.scss");
+            default:
+                return require("./styles/theme-default.scss");
+        }
+    };
+
+    const styles = requireStyles();
+
+    const node = <HTMLElement>document.createElement("style");
+    node.id = "theme";
+    node.innerHTML = styles;
+    document.body.appendChild(node);
+}
+
 if (environment.production) {
     enableProdMode();
 }
 
 toastr.options.preventDuplicates = true;
+
+loadTheme();
 
 platformBrowserDynamic().bootstrapModule(AppModule)
         .catch(err => console.log(err));
