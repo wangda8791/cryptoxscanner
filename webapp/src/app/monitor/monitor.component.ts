@@ -455,6 +455,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             }
             if (skip) {
+                delete(this.tickerMap[ticker.symbol]);
                 continue;
             }
 
