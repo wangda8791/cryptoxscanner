@@ -1,17 +1,14 @@
 @import "~toastr/build/toastr.css";
 @import "~bootswatch/dist/slate/variables";
 
-//
-// Slate fixups to be more consistence with default theme.
-//
+// Delete some Bootswatch values so the Bootstrap defaults get picked up.
+$font-family-sans-serif: null;
+$font-size-base: null;
+$input-btn-padding-y: null;
+$input-btn-padding-x: null;
 
-// Bootswatch/Slate changes this from the default size. So set the Bootstrap
-// default size first.
-$font-size-base: 1rem;
-
-// Restore the bootstrap default button padding.
-$input-btn-padding-y: .375rem;
-$input-btn-padding-x: .75rem;
+@import "~bootstrap/scss/bootstrap";
+@import "~bootswatch/dist/slate/bootswatch";
 
 // Bootswatch/Slate fixup: The border around disabled buttons was different
 //   than on enabled buttons. Make it consistent.
@@ -19,14 +16,16 @@ $input-btn-padding-x: .75rem;
   border: 1px $gray-600 solid;
 }
 
-@import "~bootstrap/scss/bootstrap";
-@import "~bootswatch/dist/slate/bootswatch";
-
 @import "./common";
 
 .navbar {
   @extend .navbar-dark;
   @extend .bg-dark;
+
+  // Bootswatch adds spacers between nav-links. Remove them.
+  .nav-link, .navbar-brand {
+    border: 0px;
+  }
 }
 
 .card-header {
