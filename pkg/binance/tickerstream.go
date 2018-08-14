@@ -25,14 +25,14 @@ import (
 )
 
 type TickerStream struct {
-	subscribers map[chan []pkg.CommonTicker]bool
+	subscribers map[chan []pkg.CommonTicker][][]pkg.CommonTicker
 	cache       *db.GenericCache
 	lock        sync.RWMutex
 }
 
 func NewTickerStream() *TickerStream {
 	tickerStream := &TickerStream{
-		subscribers: map[chan []pkg.CommonTicker]bool{},
+		subscribers: map[chan []pkg.CommonTicker][][]pkg.CommonTicker{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -48,7 +48,7 @@ func (b *TickerStream) Subscribe() chan []pkg.CommonTicker {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	channel := make(chan []pkg.CommonTicker)
-	b.subscribers[channel] = true
+	b.subscribers[channel] = [][]pkg.CommonTicker{}
 	return channel
 }
 
@@ -61,8 +61,24 @@ func (b *TickerStream) Unsubscribe(channel chan []pkg.CommonTicker) {
 func (b *TickerStream) Publish(tickers []pkg.CommonTicker) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
-	for subscriber := range b.subscribers {
-		subscriber <- tickers
+	for channel, queue := range b.subscribers {
+		for len(queue) > 0 {
+			next := queue[0]
+			select {
+			case channel <- next:
+				queue = queue[1:]
+			default:
+				queue = append(queue, tickers)
+				goto Next
+			}
+		}
+		select {
+		case channel <- tickers:
+		default:
+			queue = append(queue, tickers)
+		}
+	Next:
+		b.subscribers[channel] = queue
 	}
 }
 
