@@ -37,11 +37,13 @@ import {BinanceSymbolComponent} from './binance/symbol/symbol.component';
 import {SymbolFilterPipe} from './symbol-filter.pipe';
 import {BinanceApiService} from './binance-api.service';
 import {DoubleScrollModule} from 'mindgaze-doublescroll/dist';
-import { BaseassetPipe } from './baseasset.pipe';
-import { ExchangesymbolPipe } from './exchangesymbol.pipe';
-import { HodlooLinkPipe } from './hodloo-link.pipe';
+import {BaseassetPipe} from './baseasset.pipe';
+import {ExchangesymbolPipe} from './exchangesymbol.pipe';
+import {HodlooLinkPipe} from './hodloo-link.pipe';
 
 const appRoutes: Routes = [
+
+    // Binance.
     {
         path: "binance/monitor",
         component: BinanceMonitorComponent,
@@ -58,21 +60,6 @@ const appRoutes: Routes = [
         redirectTo: "binance/live",
     },
     {
-        path: "kucoin/monitor",
-        component: KuCoinMonitorComponent,
-        pathMatch: "prefix",
-    },
-    {
-        path: "kucoin/live",
-        component: KuCoinLiveComponent,
-        pathMatch: "prefix",
-    },
-    {
-        path: "kucoin/screener",
-        pathMatch: "prefix",
-        redirectTo: "kucoin/live",
-    },
-    {
         path: "binance/chart",
         pathMatch: "prefix",
         redirectTo: "binance/symbol",
@@ -82,6 +69,24 @@ const appRoutes: Routes = [
         pathMatch: "prefix",
         component: BinanceSymbolComponent,
     },
+
+    // KuCoin.
+    {
+        path: "kucoin",
+        children: [
+            {
+                path: "monitor",
+                component: KuCoinMonitorComponent,
+                pathMatch: "prefix",
+            },
+            {
+                path: "live",
+                component: KuCoinLiveComponent,
+                pathMatch: "prefix",
+            }
+        ]
+    },
+
     {
         path: '', component: HomeComponent, pathMatch: "prefix",
     }
