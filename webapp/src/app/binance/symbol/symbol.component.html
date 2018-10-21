@@ -141,75 +141,241 @@
   <br/>
 
   <div class="row">
+
+    <!-- Last price and price changes in %. -->
+    <div class="col">
+      <table *ngIf="lastUpdate" class="table table-sm table-bordered">
+        <thead>
+        <tr>
+          <th colspan="2">Price</th>
+        </tr>
+        </thead>
+        <tr>
+          <th>Last</th>
+          <td>{{lastUpdate.close | number:".8-8"}}</td>
+        </tr>
+        <tr>
+          <th>Spread</th>
+          <td>
+            {{(lastUpdate.ask - lastUpdate.bid) / lastUpdate.bid |
+            percent:".3"}}
+          </td>
+        </tr>
+        <tr>
+          <th>24h %</th>
+          <td>{{lastUpdate.price_change_pct["24h"]}}</td>
+        </tr>
+        <tr>
+          <th>1m %</th>
+          <td>{{lastUpdate.price_change_pct["1m"]}}</td>
+        </tr>
+        <tr>
+          <th>5m %</th>
+          <td>{{lastUpdate.price_change_pct["5m"]}}</td>
+        </tr>
+        <tr>
+          <th>10m %</th>
+          <td>{{lastUpdate.price_change_pct["10m"]}}</td>
+        </tr>
+        <tr>
+          <th>15m %</th>
+          <td>{{lastUpdate.price_change_pct["15m"]}}</td>
+        </tr>
+        <tr>
+          <th>60m %</th>
+          <td>{{lastUpdate.price_change_pct["1h"]}}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- RSI. -->
     <div class="col">
       <div class="table-responsive">
         <table *ngIf="lastUpdate" class="table table-sm table-bordered">
           <thead>
           <tr>
-            <th>Last</th>
-            <th>Spread</th>
-            <th>24h %</th>
-            <th>1m %</th>
-            <th>5m %</th>
-            <th>10m %</th>
-            <th>15m %</th>
-            <th>60m %</th>
+            <th colspan="2">RSI</th>
           </tr>
           </thead>
           <tr>
-            <td>{{lastUpdate.close | number:".8-8"}}</td>
-            <td>{{(lastUpdate.ask - lastUpdate.bid) / lastUpdate.bid |
-              percent:".3"}}
-            </td>
-            <td>{{lastUpdate.price_change_pct["24h"]}}</td>
-            <td>{{lastUpdate.price_change_pct["1m"]}}</td>
-            <td>{{lastUpdate.price_change_pct["5m"]}}</td>
-            <td>{{lastUpdate.price_change_pct["10m"]}}</td>
-            <td>{{lastUpdate.price_change_pct["15m"]}}</td>
-            <td>{{lastUpdate.price_change_pct["1h"]}}</td>
+            <th>RSI 1m</th>
+            <td>{{lastUpdate.rsi_60 | number:".4-4"}}</td>
+          </tr>
+          <tr>
+            <th>RSI 3m</th>
+            <td>{{lastUpdate.rsi_180 | number:".4-4"}}</td>
+          </tr>
+          <tr>
+            <th>RSI 5m</th>
+            <td>{{lastUpdate.rsi_300 | number:".4-4"}}</td>
+          </tr>
+          <tr>
+            <th>RSI 15m</th>
+            <td>{{lastUpdate.rsi_900 | number:".4-4"}}</td>
           </tr>
         </table>
       </div>
 
+      <table *ngIf="lastUpdate" class="table table-bordered table-sm">
+        <thead>
+        <tr>
+          <th colspan="2">Average True Range</th>
+        </tr>
+        </thead>
+        <tr>
+          <th title="1D ATR (14, RMA)">ATR 1D</th>
+          <td>{{ATR['1d'] | number:".8-8"}}</td>
+        </tr>
+        <tr>
+          <th title="1H ATR (14, RMA)">ATH 1h</th>
+          <td>{{ATR['1h'] | number:".8-8"}}
+        </tr>
+      </table>
+
+    </div>
+
+    <!-- Price ranges. -->
+    <div class="col">
       <div class="table-responsive">
-        <table [hidden]="!lastUpdate || !lastUpdate.vwap_1m"
-               class="table table-sm table-bordered">
+        <table *ngIf="lastUpdate" class="table table-sm table-bordered">
           <thead>
           <tr>
-            <th>VWAP 1m</th>
-            <th>VWAP 2m</th>
-            <th>VWAP 3m</th>
-            <th>VWAP 4m</th>
-            <th>VWAP 5m</th>
-            <th>VWAP 10m</th>
-            <th>VWAP 15m</th>
-            <th>VWAP 60m</th>
+            <th colspan="2">Price Range</th>
           </tr>
           </thead>
-          <tr *ngIf="lastUpdate && lastUpdate.vwap_1m">
+          <tr>
+            <th title="Price range in past minute">1mR</th>
+            <td>{{lastUpdate.r_1 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 2 minutes">2mR</th>
+            <td>{{lastUpdate.r_2 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 3 minutes">3mR</th>
+            <td>{{lastUpdate.r_3 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 5 minutes">5mR</th>
+            <td>{{lastUpdate.r_5 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 10 minutes">10mR</th>
+            <td>{{lastUpdate.r_10 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 15 minutes">15mR</th>
+            <td>{{lastUpdate.r_15 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 60 minutes">60mR</th>
+            <td>{{lastUpdate.r_60 | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th title="Price range in past 24 hours">24hR</th>
+            <td>{{lastUpdate.r_24 | number:".8-8"}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- VWAP. -->
+    <div class="col">
+      <div class="table-responsive">
+        <table *ngIf="lastUpdate && lastUpdate.vwap_1m"
+               class="table table-sm table-bordered">
+          <tr>
+            <th colspan="2">Volume Weight Average Price</th>
+          </tr>
+          <tr>
+            <th>VWAP 1m</th>
             <td>{{lastUpdate.vwap_1m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 2m</th>
             <td>{{lastUpdate.vwap_2m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 3m</th>
             <td>{{lastUpdate.vwap_3m | number:".8-8"}}</td>
-            <td>{{lastUpdate.vwap_4m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 5m</th>
             <td>{{lastUpdate.vwap_5m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 10m</th>
             <td>{{lastUpdate.vwap_10m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 15m</th>
             <td>{{lastUpdate.vwap_15m | number:".8-8"}}</td>
+          </tr>
+          <tr>
+            <th>VWAP 60m</th>
             <td>{{lastUpdate.vwap_60m | number:".8-8"}}</td>
           </tr>
         </table>
       </div>
-
     </div>
+
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <table class="table table-bordered table-sm">
+        <tr>
+          <th></th>
+          <th title="1 minute">1m</th>
+          <th title="2 minute">2m</th>
+          <th title="3 minute">3m</th>
+          <th title="4 minute">5m</th>
+          <th title="4 minute">10m</th>
+          <th title="15 minute">15m</th>
+          <th title="1 hour">60m</th>
+        </tr>
+        <tr *ngIf="lastUpdate">
+          <th>Volume</th>
+          <td>{{lastUpdate.total_volume_1 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_2 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_3 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_5 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_10 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_15 | number:".3-3"}}</td>
+          <td>{{lastUpdate.total_volume_60 | number:".3-3"}}</td>
+          <!--<td>{{lastUpdate.volume | number:".3-3"}}</td>-->
+        </tr>
+        <tr *ngIf="lastUpdate">
+          <th>% Change</th>
+          <td>{{lastUpdate.volume_change_pct["1m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["2m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["3m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["5m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["10m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["15m"]}}</td>
+          <td>{{lastUpdate.volume_change_pct["1h"]}}</td>
+        </tr>
+        <tr *ngIf="lastUpdate">
+          <th>Net Volume</th>
+          <td>{{lastUpdate.nv_1 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_2 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_3 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_5 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_10 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_15 | number:".3-3"}}</td>
+          <td>{{lastUpdate.nv_60 | number:".3-3"}}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="row">
 
     <div class="col">
       <div class="table-responsive">
         <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
           <thead>
           <tr>
-            <th title="1D ATR (14, RMA)">ATR 1D</th>
-            <th title="1H ATR (14, RMA)" style="border-right: 3px solid;">ATR
-              1H
-            </th>
             <th>1mR%</th>
             <th>2mR%</th>
             <th>3mR%</th>
@@ -221,9 +387,6 @@
           </tr>
           </thead>
           <tr *ngIf="lastUpdate">
-            <td>{{ATR['1d'] | number:".8-8"}}</td>
-            <td style="border-right: 3px solid;">{{ATR['1h'] | number:".8-8"}}
-            </td>
             <td>{{lastUpdate.rp_1 | number:".2-2"}}</td>
             <td>{{lastUpdate.rp_2 | number:".2-2"}}</td>
             <td>{{lastUpdate.rp_3 | number:".2-2"}}</td>
@@ -236,130 +399,6 @@
         </table>
       </div>
 
-      <div class="table-responsive">
-        <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
-          <tr>
-            <th>RSI 1m</th>
-            <th>RSI 3m</th>
-            <th>RSI 5m</th>
-            <th>RSI 15m</th>
-          </tr>
-          <tr *ngIf="lastUpdate">
-            <td>{{lastUpdate.rsi_60 | number:".4-4"}}</td>
-            <td>{{lastUpdate.rsi_180 | number:".4-4"}}</td>
-            <td>{{lastUpdate.rsi_300 | number:".4-4"}}</td>
-            <td>{{lastUpdate.rsi_900 | number:".4-4"}}</td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="table-responsive">
-        <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
-          <thead>
-          <tr>
-            <th title="Price range in past minute">1mR</th>
-            <th title="Price range in past 2 minutes">2mR</th>
-            <th title="Price range in past 3 minutes">3mR</th>
-            <th title="Price range in past 5 minutes">5mR</th>
-            <th title="Price range in past 10 minutes">10mR</th>
-            <th title="Price range in past 15 minutes">15mR</th>
-            <th title="Price range in past 60 minutes">60mR</th>
-            <th title="Price range in past 24 hours">24hR</th>
-          </tr>
-          </thead>
-          <tr *ngIf="lastUpdate">
-            <td>{{lastUpdate.r_1 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_2 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_3 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_5 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_10 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_15 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_60 | number:".8-8"}}</td>
-            <td>{{lastUpdate.r_24 | number:".8-8"}}</td>
-          </tr>
-        </table>
-
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col">
-      <div class="table-responsive">
-        <table *ngIf="lastUpdate" class="table table-sm table-bordered">
-          <thead>
-          <tr>
-            <th>1mV%</th>
-            <th>2mV%</th>
-            <th>3mV%</th>
-            <th>5mV%</th>
-            <th>10mV%</th>
-            <th>15mV%</th>
-            <th>60mV%</th>
-          </tr>
-          </thead>
-          <tr>
-            <td>{{lastUpdate.volume_change_pct["1m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["2m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["3m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["5m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["10m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["15m"]}}</td>
-            <td>{{lastUpdate.volume_change_pct["1h"]}}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    <div class="col">
-      <div class="table-responsive">
-        <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
-          <thead>
-          <tr>
-            <th data-toggle="tooltip" title="1 minute volume">1mV</th>
-            <th title="5 minute volume">5mV</th>
-            <th title="10 minute volume">10mV</th>
-            <th title="15 minute volume">15mV</th>
-            <th title="60 minute volume">60mV</th>
-            <th title="24 hour volume">24hV</th>
-          </tr>
-          </thead>
-          <tr *ngIf="lastUpdate">
-            <td>{{lastUpdate.total_volume_1 | number:".3-3"}}</td>
-            <td>{{lastUpdate.total_volume_5 | number:".3-3"}}</td>
-            <td>{{lastUpdate.total_volume_10 | number:".3-3"}}</td>
-            <td>{{lastUpdate.total_volume_15 | number:".3-3"}}</td>
-            <td>{{lastUpdate.total_volume_60 | number:".3-3"}}</td>
-            <td>{{lastUpdate.volume | number:".3-3"}}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    <div class="col">
-      <div class="table-responsive">
-        <table [hidden]="!lastUpdate" class="table table-sm table-bordered">
-          <thead>
-          <tr>
-            <th>1mNv</th>
-            <th>2mNv</th>
-            <th>3mNv</th>
-            <th>4mNv</th>
-            <th>5mNv</th>
-            <th>10mNv</th>
-            <th>15mNv</th>
-            <th>60mNv</th>
-          </tr>
-          </thead>
-          <tr *ngIf="lastUpdate">
-            <td>{{lastUpdate.nv_1 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_2 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_3 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_4 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_5 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_10 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_15 | number:".3-3"}}</td>
-            <td>{{lastUpdate.nv_60 | number:".3-3"}}</td>
-          </tr>
-        </table>
-      </div>
     </div>
   </div>
 
@@ -427,4 +466,3 @@
   </div>
 
 </div>
-
