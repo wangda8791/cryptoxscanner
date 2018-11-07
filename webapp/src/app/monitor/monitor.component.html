@@ -497,7 +497,7 @@
             <tr *ngFor="let alert of alertArray; let i = index;"
                 [ngClass]="{'table-danger': alert.type == 'drop',
                 'table-success': alert.type == 'gain',
-                'table-primary': alert.type == 'volume'}">
+                'table-info': alert.type == 'volume'}">
               <td>{{alert.timestamp | date:"medium"}}</td>
               <td *ngIf="hasCharts"><a
                   [routerLink]="['/binance/symbol', alert.ticker.symbol]"
