@@ -11,8 +11,8 @@ https://gitlab.com/crankykernel/cryptoxscanner/-/jobs/artifacts/master/browse?jo
 ## Building
 
 Before building _cryptoxscanner_ you must install Go and Node:
-- Node 8.11.3+
-- Go 1.10.3+
+- Node 10+
+- Go 1.11+
 As Cgo is used, you will also need a gcc/clang installed.
 
 Also, $GOAPTH/bin must be in your PATH.
@@ -29,8 +29,8 @@ Also, $GOAPTH/bin must be in your PATH.
 
 		make
 
-	This will produce the *cryptoxscanner* binary in the current
-    directory with the web application resources bundled into it.
+   This will produce the *cryptoxscanner* binary in the current
+   directory with the web application resources bundled into it.
 
 ## License
 

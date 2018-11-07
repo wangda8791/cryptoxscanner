@@ -3,18 +3,18 @@ image: centos:7
 before_script:
   # Install required system packages.
   - yum -y install epel-release
-  - yum -y install git make zip mingw64-gcc mingw32-gcc
-  - yum -y install gcc
-
-  # Copy the project into the GOPATH.
-  # - mkdir -p /go/src/gitlab.com/crankykernel/cryptoxscanner
-  # - cp -a . /go/src/gitlab.com/crankykernel/cryptoxscanner
-  - mkdir -p /go/src/gitlab.com/crankykernel
-  - cp -a ../cryptoxscanner /go/src/gitlab.com/crankykernel
+  - |
+    yum -y install \
+        git \
+        make \
+        zip \
+        gcc \
+        gcc-c++ \
+        mingw32-gcc \
+        mingw64-gcc
 
   # Download and install Go.
-  - curl -o /tmp/go.tar.gz -L https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
-  - (cd /usr/local && tar xf /tmp/go.tar.gz)
+  - curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz | (cd /usr/local && tar zxf -)
 
   # Use nvm to install the latest LTS node.
   - curl --silent -o - https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
@@ -25,11 +25,7 @@ before_script:
 
 build:
   script: |
-    export GOPATH=/go
-    export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-    go version
-    go env
-    cd /go/src/gitlab.com/crankykernel/cryptoxscanner
+    export PATH=/usr/local/go/bin:$PATH
     make install-deps
     VERSION=${CI_COMMIT_REF_NAME} CC=gcc GOOS=linux GOARCH=amd64 \
         make dist
@@ -43,4 +39,3 @@ build:
   artifacts:
     paths:
       - "*.zip"
-

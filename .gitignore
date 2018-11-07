@@ -3,6 +3,7 @@
 /*.iml
 *~
 /vendor
+/dist
 
 *-packr.go
 /*.sqlite*
