@@ -36,7 +36,7 @@ import {OrderbookComponent} from './binance/symbol/orderbook/orderbook.component
 import {BinanceSymbolComponent} from './binance/symbol/symbol.component';
 import {SymbolFilterPipe} from './symbol-filter.pipe';
 import {BinanceApiService} from './binance-api.service';
-import {DoubleScrollModule} from 'mindgaze-doublescroll/dist';
+import {DoubleScrollModule} from 'mindgaze-doublescroll';
 import {BaseassetPipe} from './baseasset.pipe';
 import {ExchangesymbolPipe} from './exchangesymbol.pipe';
 import {HodlooLinkPipe} from './hodloo-link.pipe';

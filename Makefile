@@ -29,6 +29,10 @@ clean:
 	find . -name \*-packr.go -delete
 	rm -rf dist
 
+distclean:
+	cd webapp && $(MAKE) $@
+	rm -rf vendor
+
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)
 dist: GOEXE=$(shell go env GOEXE)
