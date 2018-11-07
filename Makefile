@@ -19,7 +19,6 @@ build:
 
 install-deps:
 	$(MAKE) -C webapp $@
-	go get github.com/cespare/reflex
 	go get github.com/gobuffalo/packr/packr
 	go mod download
 
