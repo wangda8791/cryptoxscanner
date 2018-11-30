@@ -47,10 +47,6 @@ var static packr.Box
 
 func ServerMain(options Options) {
 
-	// Start the KuCoin runner.
-	kucoinWebSocketHandler := NewBroadcastWebSocketHandler()
-	go KuCoinRunner(kucoinWebSocketHandler)
-
 	// Start the Binance runner. This is a little bit of a message as the
 	// socket can subscribe to specific symbol feeds directly. This should be
 	// abstracted with some sort of broker.
@@ -61,9 +57,6 @@ func ServerMain(options Options) {
 	go binanceFeed.Run()
 
 	router := mux.NewRouter()
-
-	router.HandleFunc("/ws/kucoin/live", kucoinWebSocketHandler.Handle)
-	router.HandleFunc("/ws/kucoin/monitor", kucoinWebSocketHandler.Handle)
 
 	router.HandleFunc("/ws/binance/live", binanceWebSocketHandler.Handle)
 	router.HandleFunc("/ws/binance/monitor", binanceWebSocketHandler.Handle)

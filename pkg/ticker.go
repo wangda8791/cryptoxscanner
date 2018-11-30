@@ -17,8 +17,6 @@ package pkg
 
 import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
-	"gitlab.com/crankykernel/cryptotrader/kucoin"
-	"gitlab.com/crankykernel/cryptotrader/util"
 	"time"
 )
 
@@ -54,19 +52,5 @@ func CommonTickerFromBinanceTicker(ticker binance.Stream24Ticker) CommonTicker {
 	common.PriceChangePct24 = ticker.PriceChangePercent
 	common.High = ticker.HighPrice
 	common.Low = ticker.LowPrice
-	return common
-}
-
-func CommonTickerFromKuCoinTicker(ticker kucoin.TickEntry) CommonTicker {
-	common := CommonTicker{}
-	common.Symbol = ticker.Symbol
-	common.Timestamp = util.MillisToTime(ticker.DateTimeMillis)
-	common.LastPrice = ticker.LastDealPrice
-	common.QuoteVolume = ticker.VolValue
-	common.PriceChangePct24 = ticker.ChangeRate * 100
-	common.Bid = ticker.Buy
-	common.Ask = ticker.Sell
-	common.High = ticker.High
-	common.Low = ticker.Low
 	return common
 }

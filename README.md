@@ -1,7 +1,7 @@
 # CryptoXScanner
 
 This is the source code for my crypto exchange scanner. Currently
-supported exchanges include Binace and KuCoin.
+the other supported exchange is Binance.
 
 ## Download
 
