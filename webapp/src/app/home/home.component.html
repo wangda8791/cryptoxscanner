@@ -21,6 +21,33 @@
 
   <br/>
 
+  <div class="card border-warning">
+    <div class="card-header bg-warning align-content-center">
+      KuCoin -- End of Life Notice
+    </div>
+    <div class="card-body">
+      <p>
+        I have decided to end of life the KuCoin scanner. Less than 1% of the connections
+        to this site are for KuCoin, and due to some initial design choices, it makes it
+        harder to build enhancements into the Binance scanner.
+      </p>
+      <p>
+        It may come back in the future when I've built in better support for a multi-exchange
+        scanner. But for now this scanner will remain, I'll restart it when it gets glitchy
+        but no further work will be done on it.
+      </p>
+      <p>
+        I have a left a copy of the KuCoin scanner running at an alternate URL. I will restart
+        it as needed but do not plan to maintain it.
+      </p>
+      <p style="text-align: center">
+        <a href="https://kucoin.cryptoxscanner.com">https://kucoin.cryptoxscanner.com</a>
+      </p>
+    </div>
+  </div>
+
+  <br/>
+
   <div class="card border-info">
     <div class="card-header align-content-center">
       Updates
@@ -34,10 +61,10 @@
         <b>2018-05-07</b>
         <ul>
           <li>Source code is now available on <a
-              href="https://gitlab.com/crankykernel/cryptoxscanner">GitHub</a>.
+            href="https://gitlab.com/crankykernel/cryptoxscanner">GitHub</a>.
           </li>
           <li>Issue tracker also moved to <a
-              href="https://gitlab.com/crankykernel/cryptoxscanner/issues">GitHub</a>.
+            href="https://gitlab.com/crankykernel/cryptoxscanner/issues">GitHub</a>.
           </li>
         </ul>
       </li>
@@ -79,13 +106,13 @@
         <b>2018-04-24</b>
         <ul>
           <li>The top gainers and losers on the <a
-              [routerLink]="['/binance/monitor']">monitor</a> will display the
+            [routerLink]="['/binance/monitor']">monitor</a> will display the
             top 10 gainers and losers instead of just those matching the
             filters. Gainers and losers matching the filters will appear in the
             alerts panel.
           </li>
           <li>Added 2m, 3m and 4m net volume to the <a
-              [routerLink]="['/binance/live']">live</a> views.
+            [routerLink]="['/binance/live']">live</a> views.
           </li>
           <li>Added desktop notifications for alerts.</li>
         </ul>
@@ -154,7 +181,8 @@
             Inspired
             by <a href="https://twitter.com/CryptoZyzz">CryptoZyzz</a>'s work
             at
-            <a href="https://agile-cliffs-23967.herokuapp.com/binance">https://agile-cliffs-23967.herokuapp.com/binance</a>.
+            <a
+              href="https://agile-cliffs-23967.herokuapp.com/binance">https://agile-cliffs-23967.herokuapp.com/binance</a>.
             The goal is to work it into some sort of alert/indicator.
             <br/>
             Unfortunately net volume is not persisted between restarts of

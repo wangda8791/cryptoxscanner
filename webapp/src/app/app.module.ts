@@ -14,7 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import {BrowserModule} from '@angular/platform-browser';
-import {NgModule} from '@angular/core';
+import {Component, NgModule, OnInit} from '@angular/core';
 import {BinanceMonitorComponent,} from './monitor/monitor.component';
 import {ScannerApiService} from './scanner-api.service';
 import {FormsModule} from '@angular/forms';
@@ -32,6 +32,24 @@ import {DoubleScrollModule} from 'mindgaze-doublescroll';
 import {BaseassetPipe} from './baseasset.pipe';
 import {ExchangesymbolPipe} from './exchangesymbol.pipe';
 import {HodlooLinkPipe} from './hodloo-link.pipe';
+
+@Component({
+    template: ``,
+})
+export class KuCoinMonitorRedirectComponent implements OnInit {
+    ngOnInit(): void {
+        window.location.href = "https://kucoin.cryptoxscanner.com/kucoin/monitor";
+    }
+}
+
+@Component({
+    template: ``,
+})
+export class KuCoinLiveRedirectComponent implements OnInit {
+    ngOnInit(): void {
+        window.location.href = "https://kucoin.cryptoxscanner.com/kucoin/live";
+    }
+}
 
 const appRoutes: Routes = [
 
@@ -63,6 +81,17 @@ const appRoutes: Routes = [
     },
 
     {
+        path: "kucoin/monitor",
+        pathMatch: "prefix",
+        component: KuCoinMonitorRedirectComponent,
+    },
+    {
+        path: "kucoin/live",
+        pathMatch: "prefix",
+        component: KuCoinLiveRedirectComponent,
+    },
+
+    {
         path: '', component: HomeComponent, pathMatch: "prefix",
     }
 ];
@@ -81,6 +110,9 @@ const appRoutes: Routes = [
         BaseassetPipe,
         ExchangesymbolPipe,
         HodlooLinkPipe,
+
+        KuCoinMonitorRedirectComponent,
+        KuCoinLiveRedirectComponent,
     ],
     imports: [
         BrowserModule,
