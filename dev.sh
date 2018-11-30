@@ -6,5 +6,5 @@ trap 'echo "Killing background jobs..."; kill $(jobs -p)' EXIT
 
 while true; do
     find */* -name \*.go | \
-	entr -d -r sh -c "go build -v && ./cryptoxscanner server"
+	entr -d -r sh -c "make cryptoxscanner && ./cryptoxscanner server"
 done

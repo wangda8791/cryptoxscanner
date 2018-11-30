@@ -7,7 +7,7 @@ TAGS :=		json1
 
 LDFLAGS :=	-w -s
 
-.PHONY:		dist
+.PHONY:		dist $(APP)
 
 all: build
 
@@ -15,6 +15,9 @@ build:
 	./update-proto-version.py
 	cd webapp && make
 	$(GOPATH)/bin/packr -z
+	$(MAKE) $(APP)
+
+$(APP):
 	go build --tags "$(TAGS)" -ldflags "$(LDFLAGS)"
 
 install-deps:
