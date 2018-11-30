@@ -16,7 +16,6 @@
 import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
 import {
     BinanceBaseCoins,
-    KuCoinBaseCoins,
     ScannerApiService,
     SymbolUpdate,
 } from '../scanner-api.service';
@@ -757,38 +756,6 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             default:
                 return (a[field] - b[field]) * rev;
         }
-    }
-
-}
-
-@Component({
-    templateUrl: './monitor.component.html',
-    styleUrls: ['./monitor.component.scss'],
-    animations: [
-        trigger('bannerState', [
-            state('void', style({
-                opacity: 0,
-            })),
-            state('*', style({
-                opacity: 1,
-            })),
-            transition('* => void', animate('500ms ease-out')),
-            transition('void => *', animate('500ms ease-out')),
-        ])
-    ]
-})
-export class KuCoinMonitorComponent extends BinanceMonitorComponent {
-
-    public exchange: string = "kucoin";
-    public baseCoins: string[] = KuCoinBaseCoins;
-    public hasCharts: boolean = false;
-
-    protected connect() {
-        return this.tokenFxApi.connectKuCoinMonitor();
-    }
-
-    protected getPageTitle() {
-        return this.exchange.charAt(0).toUpperCase() + this.exchange.slice(1);
     }
 
 }

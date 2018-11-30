@@ -15,20 +15,12 @@
 
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
-import {
-    BinanceMonitorComponent,
-    KuCoinMonitorComponent
-} from './monitor/monitor.component';
+import {BinanceMonitorComponent,} from './monitor/monitor.component';
 import {ScannerApiService} from './scanner-api.service';
 import {FormsModule} from '@angular/forms';
 import {RouterModule, Routes} from '@angular/router';
 import {RootComponent} from './root/root.component';
-import {
-    AppThSortableComponent,
-    AppUpDownDirective,
-    BinanceLiveComponent,
-    KuCoinLiveComponent,
-} from './live/live.component';
+import {AppThSortableComponent, AppUpDownDirective, BinanceLiveComponent,} from './live/live.component';
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {HomeComponent} from './home/home.component';
 import {HttpClientModule} from '@angular/common/http';
@@ -70,23 +62,6 @@ const appRoutes: Routes = [
         component: BinanceSymbolComponent,
     },
 
-    // KuCoin.
-    {
-        path: "kucoin",
-        children: [
-            {
-                path: "monitor",
-                component: KuCoinMonitorComponent,
-                pathMatch: "prefix",
-            },
-            {
-                path: "live",
-                component: KuCoinLiveComponent,
-                pathMatch: "prefix",
-            }
-        ]
-    },
-
     {
         path: '', component: HomeComponent, pathMatch: "prefix",
     }
@@ -100,8 +75,6 @@ const appRoutes: Routes = [
         AppThSortableComponent,
         AppUpDownDirective,
         HomeComponent,
-        KuCoinMonitorComponent,
-        KuCoinLiveComponent,
         BinanceSymbolComponent,
         OrderbookComponent,
         SymbolFilterPipe,
@@ -115,7 +88,7 @@ const appRoutes: Routes = [
         FormsModule,
         HttpClientModule,
         RouterModule.forRoot(
-                appRoutes, {useHash: false},
+            appRoutes, {useHash: false},
         ),
         DoubleScrollModule,
     ],

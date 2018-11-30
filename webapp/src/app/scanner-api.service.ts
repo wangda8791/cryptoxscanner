@@ -29,14 +29,6 @@ export const BinanceBaseCoins: string[] = [
     "USDT",
 ];
 
-export const KuCoinBaseCoins: string[] = [
-    "BTC",
-    "ETH",
-    "USDT",
-    "KCS",
-    "NEO",
-];
-
 @Injectable()
 export class ScannerApiService {
 
@@ -110,16 +102,6 @@ export class ScannerApiService {
 
     public connectBinanceSymbol(symbol: string): Observable<SymbolUpdate[] | SymbolUpdate> {
         const url = `${this.baseUrl}/ws/binance/symbol?symbol=${symbol}`;
-        return this.connect(url);
-    }
-
-    public connectKuCoinMonitor(): Observable<SymbolUpdate[] | SymbolUpdate> {
-        const url = `${this.baseUrl}/ws/kucoin/monitor`;
-        return this.connect(url);
-    }
-
-    public connectKuCoinLive(): Observable<SymbolUpdate[] | SymbolUpdate> {
-        const url = `${this.baseUrl}/ws/kucoin/live`;
         return this.connect(url);
     }
 

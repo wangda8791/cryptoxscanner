@@ -24,7 +24,6 @@ import {
 import {Subscription} from 'rxjs/Subscription';
 import {
     BinanceBaseCoins,
-    KuCoinBaseCoins,
     ScannerApiService,
     SymbolUpdate
 } from '../scanner-api.service';
@@ -732,31 +731,4 @@ export class AppUpDownDirective {
         el.nativeElement.style.color = "green";
     }
 
-}
-
-@Component({
-    templateUrl: './live.component.html',
-    styleUrls: ['./live.component.scss'],
-    animations: [
-        trigger('bannerState', [
-            state('void', style({
-                opacity: 0,
-            })),
-            state('*', style({
-                opacity: 1,
-            })),
-            transition('* => void', animate('500ms ease-out')),
-            transition('void => *', animate('500ms ease-out')),
-        ])
-    ]
-})
-export class KuCoinLiveComponent extends BinanceLiveComponent {
-
-    public exchange: string = "kucoin";
-    public baseTokens: string[] = KuCoinBaseCoins;
-    public hasCharts: boolean = false;
-
-    protected connect() {
-        return this.tokenFxApi.connectKuCoinLive();
-    }
 }

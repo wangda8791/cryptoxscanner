@@ -7,14 +7,6 @@
 
 <div class="container-fluid">
 
-  <div *ngIf="exchange == 'kucoin'" class="jumbotron text-center mt-2"
-       style="padding: 0px; margin: 0px;">
-    If you use KuCoin, please consider letting me
-    <a href="javascript:void(0);"
-       data-toggle="modal"
-       data-target="#aboutModal">know</a>.
-  </div>
-
   <nav class="navbar navbar-expand-lg mt-2 mb-2">
     <span class="navbar-brand">
       <div class="input-group input-group">
@@ -508,17 +500,12 @@
               <td>{{alert.ticker.volume | number:".2-2"}}</td>
               <td>
                 <span class="float-right">
-                  <a *ngIf="exchange == 'binance'"
+                  <a
                      class="btn btn-outline-secondary btn-sm"
                      href="https://www.binance.com/tradeDetail.html?symbol={{alert.ticker.symbol | exchangesymbol:'binance'}}"
                      target="_blank" alt="Binance" title="Binance">B</a>
 
-                  <a *ngIf="exchange == 'kucoin'"
-                     href="https://www.kucoin.com/#/trade.pro/{{alert.ticker.symbol}}"
-                     class="btn btn-outline-secondary btn-sm" target="_blank"
-                     alert="KuCoin" title="KuCoin">K</a>
-
-                  <a *ngIf="exchange == 'binance'"
+                  <a
                      href="https://www.tradingview.com/chart?symbol=BINANCE:{{alert.ticker.symbol}}"
                      class="btn btn-outline-secondary btn-sm" target="_blank"
                      alert="Trading View" title="Trading View">TV</a>

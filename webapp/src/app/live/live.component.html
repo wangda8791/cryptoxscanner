@@ -1,15 +1,5 @@
 <div class="container-fluid p-0 p-md-2">
 
-  <div *ngIf="exchange == 'kucoin'" class="jumbotron text-center mt-2"
-       style="padding: 0px; margin: 0px;">
-    If you use KuCoin, please consider letting me
-    <a href="javascript:void(0);"
-       data-toggle="modal"
-       data-target="#aboutModal">know</a>.
-  </div>
-
-  <br/>
-
   <div style="position: fixed; top: 2px; left: 25%; width: 50%; z-index: 5000;">
     <div *ngIf="banner.show" [@bannerState]="banner.className"
          class="text-center alert {{banner.className}}">
