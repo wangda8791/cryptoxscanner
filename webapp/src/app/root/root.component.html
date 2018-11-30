@@ -1,7 +1,7 @@
 <nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark">
 
   <a class="navbar-brand" [routerLink]="['/']" active="false">
-    Token Monitor</a>
+    Legacy KuCoin Monitor</a>
 
   <button class="navbar-toggler" type="button" data-toggle="collapse"
           data-target="#navbarSupportedContent"
@@ -16,27 +16,15 @@
 
     <ul class="navbar-nav mr-auto">
 
-      <li class="nav-item" [routerLink]="['/binance/monitor']"
+      <li class="nav-item" [routerLink]="['/kucoin/monitor']"
           [routerLinkActive]="['active']">
-        <a class="nav-link" [routerLink]="['/binance/monitor']">Binance
+        <a class="nav-link" [routerLink]="['/kucoin/monitor']">KuCoin
           Monitor</a>
       </li>
-      <li class="nav-item" [routerLink]="['/binance/live']"
+      <li class="nav-item" [routerLink]="['/kucoin/live']"
           [routerLinkActive]="['active']">
-        <a class="nav-link" [routerLink]="['/binance/live']">Binance
+        <a class="nav-link" [routerLink]="['/kucoin/live']">KuCoin
           Live</a>
-      </li>
-      <li class="nav-item dropdown" routerLinkActive="active">
-        <a class="nav-link dropdown-toggle" href="#" id="kucoinDropdown"
-           role="button" data-toggle="dropdown" aria-haspopup="true"
-           aria-expanded="false">KuCoin</a>
-        <div class="dropdown-menu dropdown-menu-right"
-             aria-labelledby="kucoinDropdown">
-          <a class="dropdown-item" [routerLink]="['/kucoin/monitor']">KuCoin
-            Monitor</a>
-          <a class="dropdown-item" [routerLink]="['/kucoin/live']">KuCoin
-            Live</a>
-        </div>
       </li>
     </ul>
 

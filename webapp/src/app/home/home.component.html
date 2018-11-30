@@ -4,25 +4,6 @@
 
   <div class="row">
     <div class="col">
-      <a [routerLink]="['/binance/monitor']" type="button" href="" role="button"
-         class="btn btn-secondary btn-block">Binance Gainers/Losers</a>
-    </div>
-  </div>
-
-  <br/>
-
-  <div class="row">
-    <div class="col">
-      <a [routerLink]="['/binance/screener']" type="button" href=""
-         role="button"
-         class="btn btn-secondary btn-block">Binance Live</a>
-    </div>
-  </div>
-
-  <br/>
-
-  <div class="row">
-    <div class="col">
       <a [routerLink]="['/kucoin/monitor']" type="button" href=""
          role="button"
          class="btn btn-secondary btn-block">KuCoin Gainers/Losers</a>
@@ -36,6 +17,26 @@
       <a [routerLink]="['/kucoin/live']" type="button" href=""
          role="button"
          class="btn btn-secondary btn-block">KuCoin Live</a>
+    </div>
+  </div>
+
+  <br/>
+
+  <div class="card border-warning">
+    <div class="card-header bg-warning align-content-center">
+        End of Life Notice
+    </div>
+    <div class="card-body">
+      <p>
+        I have decided to end of life the KuCoin scanner. Less than 1% of the connections
+        to this site are for KuCoin, and due to some initial design choices, it makes it
+        harder to build enhancements into the Binance scanner.
+      </p>
+      <p>
+        It may come back in the future when I've built in better support for a multi-exchange
+        scanner. But for now this scanner will remain, I'll restart it when it gets glitchy
+        but no further work will be done on it.
+      </p>
     </div>
   </div>
 

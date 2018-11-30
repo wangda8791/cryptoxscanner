@@ -54,20 +54,20 @@ func ServerMain(options Options) {
 	// Start the Binance runner. This is a little bit of a message as the
 	// socket can subscribe to specific symbol feeds directly. This should be
 	// abstracted with some sort of broker.
-	binanceFeed := NewBinanceRunner()
-	binanceWebSocketHandler := NewBroadcastWebSocketHandler()
-	binanceFeed.websocket = binanceWebSocketHandler
-	binanceWebSocketHandler.Feed = binanceFeed
-	go binanceFeed.Run()
+	//binanceFeed := NewBinanceRunner()
+	//binanceWebSocketHandler := NewBroadcastWebSocketHandler()
+	//binanceFeed.websocket = binanceWebSocketHandler
+	//binanceWebSocketHandler.Feed = binanceFeed
+	//go binanceFeed.Run()
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/ws/kucoin/live", kucoinWebSocketHandler.Handle)
 	router.HandleFunc("/ws/kucoin/monitor", kucoinWebSocketHandler.Handle)
 
-	router.HandleFunc("/ws/binance/live", binanceWebSocketHandler.Handle)
-	router.HandleFunc("/ws/binance/monitor", binanceWebSocketHandler.Handle)
-	router.HandleFunc("/ws/binance/symbol", binanceWebSocketHandler.Handle)
+	//router.HandleFunc("/ws/binance/live", binanceWebSocketHandler.Handle)
+	//router.HandleFunc("/ws/binance/monitor", binanceWebSocketHandler.Handle)
+	//router.HandleFunc("/ws/binance/symbol", binanceWebSocketHandler.Handle)
 
 	router.PathPrefix("/api/1/binance/proxy").Handler(binance.NewApiProxy())
 
