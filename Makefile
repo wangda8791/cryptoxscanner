@@ -7,7 +7,7 @@ TAGS :=		json1
 
 LDFLAGS :=	-w -s
 
-.PHONY:		dist $(APP)
+.PHONY:		build dist $(APP)
 
 all: build
 
@@ -37,12 +37,13 @@ distclean:
 	rm -rf vendor
 
 docker-build:
-	docker build -t cryptoxscanner-builder -f Dockerfile.build .
+	docker build -t cryptoxscanner-builder -f build/Dockerfile.build .
 	docker run --rm -it \
 		-v `pwd`:/src \
 		-v `pwd`/.cache/node_modules:/src/webapp/node_modules \
-		-v `pwd`/.cache/go:/root/go \
+		-v `pwd`/.cache/go:/home/builder/go \
 		-w /src \
+		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 		cryptoxscanner-builder make install-deps build
 
 dist: GOOS=$(shell go env GOOS)

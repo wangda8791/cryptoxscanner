@@ -16,3 +16,9 @@ ENV GO_V=1.11.2
 RUN cd /usr/local && \
     curl --silent -L -o - https://dl.google.com/go/go${GO_V}.linux-amd64.tar.gz | tar zxf -
 ENV PATH=/usr/local/go/bin:$PATH
+
+COPY /build/build-entrypoint.sh /
+
+RUN useradd builder
+
+ENTRYPOINT ["/build-entrypoint.sh"]
