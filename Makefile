@@ -14,7 +14,7 @@ all: build
 build:
 	./update-proto-version.py
 	cd webapp && make
-	$(GOPATH)/bin/packr -z
+	$(GOPATH)/bin/packr -z -v -i server
 	$(MAKE) $(APP)
 
 $(APP):
@@ -36,6 +36,15 @@ distclean:
 	cd webapp && $(MAKE) $@
 	rm -rf vendor
 
+docker-build:
+	docker build -t cryptoxscanner-builder -f Dockerfile.build .
+	docker run --rm -it \
+		-v `pwd`:/src \
+		-v `pwd`/.cache/node_modules:/src/webapp/node_modules \
+		-v `pwd`/.cache/go:/root/go \
+		-w /src \
+		cryptoxscanner-builder make install-deps build
+
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)
 dist: GOEXE=$(shell go env GOEXE)
@@ -45,7 +54,7 @@ dist:
 	rm -rf dist/$(OUTDIR)
 	mkdir -p dist/$(OUTDIR)
 	cd webapp && $(MAKE)
-	$(GOPATH)/bin/packr -z
+	$(GOPATH)/bin/packr -z -v -i server
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) \
 		go build --tags "$(TAGS)" --ldflags "$(LDFLAGS)" \
 			-o dist/$(OUTDIR)/$(OUTBIN)

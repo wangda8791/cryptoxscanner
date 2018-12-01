@@ -7,3 +7,4 @@
 
 *-packr.go
 /*.sqlite*
+/.cache
