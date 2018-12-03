@@ -67,7 +67,7 @@ func ServerMain(options Options) {
 	router.HandleFunc("/api/1/ping", pingHandler)
 	router.HandleFunc("/api/1/status/websockets", webSocketsStatusHandler)
 
-	static := packr.NewBox("../webapp/dist")
+	static := packr.NewBox("../../webapp/dist")
 	staticServer := http.FileServer(static)
 
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

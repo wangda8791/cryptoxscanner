@@ -27,12 +27,9 @@ build:
   script: |
     export PATH=/usr/local/go/bin:$PATH
     make install-deps
-    VERSION=${CI_COMMIT_REF_NAME} CC=gcc GOOS=linux GOARCH=amd64 \
-        make dist
-    VERSION=${CI_COMMIT_REF_NAME} \
-        CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 make dist
-    VERSION=${CI_COMMIT_REF_NAME} \
-        CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 make dist
+    CC=gcc GOOS=linux GOARCH=amd64 make dist
+    CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 SKIP_WEBAPP=1 make dist
+    CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 SKIP_WEBAPP=1 make dist
 
     cp dist/*.zip ${CI_PROJECT_DIR}
 

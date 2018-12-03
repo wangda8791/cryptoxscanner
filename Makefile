@@ -1,44 +1,28 @@
 APP :=		cryptoxscanner
-VERSION ?=	$(shell git rev-parse --abbrev-ref HEAD)
+VERSION ?=	0.1.0dev$(shell date +%s)
 
-GOPATH ?=	${HOME}/go
-CGO_ENABLED :=	1
-TAGS :=		json1
-
-BUILD :=	$(shell cat ./BUILD)
-
-BUILD_GO_VAR :=	gitlab.com/crankykernel/cryptoxscanner/pkg.BuildNumber
-
-LDFLAGS :=	-w -s \
-		-X \"$(BUILD_GO_VAR)=$(BUILD)\"
-
-.PHONY:		build dist $(APP)
+.PHONY:		build dist
 
 all: build
 
 build:
 	cd webapp && make
-	$(GOPATH)/bin/packr -z -v -i server
-	$(MAKE) $(APP)
-
-$(APP):
-	go build --tags "$(TAGS)" -ldflags "$(LDFLAGS)"
+	cd go && make
 
 install-deps:
-	$(MAKE) -C webapp $@
-	go get github.com/gobuffalo/packr/packr
-	go mod download
+	cd webapp && $(MAKE) $@
+	cd go && $(MAKE) $@
 
 clean:
-	rm -f cryptoxscanner
 	cd webapp && $(MAKE) $@
+	cd go && $(MAKE) $@
 	find . -name \*~ -delete
 	find . -name \*-packr.go -delete
 	rm -rf dist
 
-distclean:
+distclean: clean
+	cd go && $(MAKE) $@
 	cd webapp && $(MAKE) $@
-	rm -rf vendor
 
 docker-build:
 	docker build -t cryptoxscanner-builder -f build/Dockerfile.build .
@@ -53,14 +37,12 @@ docker-build:
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)
 dist: GOEXE=$(shell go env GOEXE)
-dist: OUTDIR=$(APP)-$(VERSION)$(VSUFFIX)-$(GOOS)-$(GOARCH)
+dist: OUTDIR=$(APP)-$(VERSION)-$(GOOS)-$(GOARCH)
 dist: OUTBIN=$(APP)$(GOEXE)
 dist:
 	rm -rf dist/$(OUTDIR)
 	mkdir -p dist/$(OUTDIR)
-	cd webapp && $(MAKE)
-	$(GOPATH)/bin/packr -z -v -i server
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) \
-		go build --tags "$(TAGS)" --ldflags "$(LDFLAGS)" \
-			-o dist/$(OUTDIR)/$(OUTBIN)
+	test "${SKIP_WEBAPP}" || (cd webapp && $(MAKE))
+	cd go && $(MAKE) BIN=../dist/$(OUTDIR)/$(OUTBIN)
+	cp README.md LICENSE.txt dist/$(OUTDIR)/
 	(cd dist && zip -r $(OUTDIR).zip $(OUTDIR))
