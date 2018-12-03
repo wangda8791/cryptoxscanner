@@ -143,7 +143,8 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.Encode(map[string]interface{}{
-		"version": PROTO_VERSION,
+		"version": pkg.BuildNumberAsInt(),
+		"buildNumber": pkg.BuildNumberAsInt(),
 	})
 }
 

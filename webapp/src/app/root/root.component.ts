@@ -16,8 +16,6 @@
 import {Component, OnInit} from '@angular/core';
 import * as toastr from "toastr";
 import {ScannerApiService} from '../scanner-api.service';
-import {HttpClient} from '@angular/common/http';
-import {environment} from '../../environments/environment';
 
 @Component({
     selector: 'app-root',
@@ -25,10 +23,7 @@ import {environment} from '../../environments/environment';
 })
 export class RootComponent implements OnInit {
 
-    private uiVersionInterval: any;
-
-    constructor(private tokenFxApi: ScannerApiService,
-                private http: HttpClient) {
+    constructor(private tokenFxApi: ScannerApiService) {
     }
 
     ngOnInit() {
@@ -36,62 +31,22 @@ export class RootComponent implements OnInit {
         setInterval(() => {
             this.checkProtoVersion();
         }, 60000);
-
-        this.checkUiVersion();
-        this.uiVersionInterval = setInterval(() => {
-            this.checkUiVersion();
-        }, 60000);
     }
 
     private checkProtoVersion() {
         this.tokenFxApi.ping().subscribe((response) => {
-            if (response.version != this.tokenFxApi.PROTO_VERSION) {
+            if (response.buildNumber != this.tokenFxApi.BUILD_NUMBER) {
                 toastr.warning(`Service has been updated.
                     <a href="javascript:window.location.href=window.location.href"
                      type="button" class="btn btn-primary btn-block">Reload Now</a>`,
-                        `Reload required`, {
-                            progressBar: true,
-                            timeOut: 15000,
-                            onHidden: () => {
-                                location.reload();
-                            }
-                        });
+                    `Reload required`, {
+                        progressBar: true,
+                        timeOut: 15000,
+                        onHidden: () => {
+                            location.reload();
+                        }
+                    });
             }
-        });
-    }
-
-    private checkUiVersion() {
-        this.http.get("/assets/VERSION.UI").subscribe((response) => {
-            console.log(`Server UI version: ${response}; local version: ${environment.uiVersion}.`);
-            try {
-                const serverBuildNumber = +response;
-                const thisBuildNumber = +environment.uiVersion;
-                if (!(isNaN(serverBuildNumber) || isNaN(thisBuildNumber))) {
-                    if (serverBuildNumber == 0 || thisBuildNumber == 0) {
-                        return;
-                    }
-                    if (serverBuildNumber != thisBuildNumber) {
-                        console.log(`Running UI version: ${thisBuildNumber}; server UI version: ${serverBuildNumber}`);
-                        toastr.info(`The UI has been updated.
-                    <a href="javascript:window.location.href=window.location.href"
-                     type="button" class="btn btn-primary btn-block">Reload Now</a>`,
-                                ``, {
-                                    progressBar: true,
-                                    timeOut: 0,
-                                    closeButton: true,
-                                    onHidden: () => {
-                                        location.reload();
-                                    }
-                                });
-                        window.clearInterval(this.uiVersionInterval);
-                    }
-                }
-            } catch (err) {
-                console.log("caught error checking server build version:");
-                console.log(err);
-            }
-        }, (error) => {
-            // Might be running dev...
         });
     }
 

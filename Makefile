@@ -5,14 +5,18 @@ GOPATH ?=	${HOME}/go
 CGO_ENABLED :=	1
 TAGS :=		json1
 
-LDFLAGS :=	-w -s
+BUILD :=	$(shell cat ./BUILD)
+
+BUILD_GO_VAR :=	gitlab.com/crankykernel/cryptoxscanner/pkg.BuildNumber
+
+LDFLAGS :=	-w -s \
+		-X \"$(BUILD_GO_VAR)=$(BUILD)\"
 
 .PHONY:		build dist $(APP)
 
 all: build
 
 build:
-	./update-proto-version.py
 	cd webapp && make
 	$(GOPATH)/bin/packr -z -v -i server
 	$(MAKE) $(APP)

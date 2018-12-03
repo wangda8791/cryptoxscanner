@@ -32,7 +32,7 @@ export const BinanceBaseCoins: string[] = [
 @Injectable()
 export class ScannerApiService {
 
-    public PROTO_VERSION = environment.protoVersion;
+    public BUILD_NUMBER = environment.buildNumber;
 
     private protocol: string = "wss";
 
@@ -50,7 +50,7 @@ export class ScannerApiService {
 
         this.baseUrl = `${this.protocol}://${location.host}`;
 
-        console.log(`TokenFxApiService: PROTO_VERSION: ${this.PROTO_VERSION}`);
+        console.log(`CryptoXScanner Client Build Number: ${this.BUILD_NUMBER}`);
     }
 
     public ping(): Observable<any> {
