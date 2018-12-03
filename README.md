@@ -8,6 +8,12 @@ the other supported exchange is Binance.
 Runnable builds can be downloaded from the GitLab CI system:
 https://gitlab.com/crankykernel/cryptoxscanner/-/jobs/artifacts/master/browse?job=build
 
+From a terminal run:
+
+    ./cryptoxscanner server
+
+Then connect your browser to http://localhost:6035.
+
 ## Building
 
 Before building _cryptoxscanner_ you must install Go and Node:
