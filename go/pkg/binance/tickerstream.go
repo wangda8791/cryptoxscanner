@@ -16,23 +16,23 @@
 package binance
 
 import (
-	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"time"
 	"gitlab.com/crankykernel/cryptotrader/binance"
+	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
 	"sync"
+	"time"
 )
 
 type TickerStream struct {
-	subscribers map[chan []pkg.CommonTicker][][]pkg.CommonTicker
+	subscribers map[chan []commonticker.CommonTicker][][]commonticker.CommonTicker
 	cache       *db.GenericCache
 	lock        sync.RWMutex
 }
 
 func NewTickerStream() *TickerStream {
 	tickerStream := &TickerStream{
-		subscribers: map[chan []pkg.CommonTicker][][]pkg.CommonTicker{},
+		subscribers: map[chan []commonticker.CommonTicker][][]commonticker.CommonTicker{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -44,21 +44,21 @@ func NewTickerStream() *TickerStream {
 	return tickerStream
 }
 
-func (b *TickerStream) Subscribe() chan []pkg.CommonTicker {
+func (b *TickerStream) Subscribe() chan []commonticker.CommonTicker {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan []pkg.CommonTicker)
-	b.subscribers[channel] = [][]pkg.CommonTicker{}
+	channel := make(chan []commonticker.CommonTicker)
+	b.subscribers[channel] = [][]commonticker.CommonTicker{}
 	return channel
 }
 
-func (b *TickerStream) Unsubscribe(channel chan []pkg.CommonTicker) {
+func (b *TickerStream) Unsubscribe(channel chan []commonticker.CommonTicker) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	delete(b.subscribers, channel)
 }
 
-func (b *TickerStream) Publish(tickers []pkg.CommonTicker) {
+func (b *TickerStream) Publish(tickers []commonticker.CommonTicker) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	for channel, queue := range b.subscribers {
@@ -95,34 +95,34 @@ func (s *TickerStream) CacheAdd(body []byte) {
 	s.cache.AddItem(time.Now(), "ticker", body)
 }
 
-func (s *TickerStream) TransformTickers(inTickers []binance.Stream24Ticker) []pkg.CommonTicker {
-	tickers := []pkg.CommonTicker{}
+func (s *TickerStream) TransformTickers(inTickers []binance.Stream24Ticker) []commonticker.CommonTicker {
+	tickers := []commonticker.CommonTicker{}
 	for _, rawTicker := range inTickers {
-		tickers = append(tickers, pkg.CommonTickerFromBinanceTicker(rawTicker))
+		tickers = append(tickers, commonticker.CommonTickerFromBinanceTicker(rawTicker))
 	}
 	return tickers
 }
 
-func (s *TickerStream) DecodeTickers(buf []byte) ([]pkg.CommonTicker, error) {
+func (s *TickerStream) DecodeTickers(buf []byte) ([]commonticker.CommonTicker, error) {
 	message, err := binance.DecodeRawStreamMessage(buf)
 	if err != nil {
 		return nil, err
 	}
 
-	tickers := []pkg.CommonTicker{}
+	tickers := []commonticker.CommonTicker{}
 
 	if len(message.Tickers) > 0 {
 		for _, rawTicker := range message.Tickers {
 			tickers = append(tickers,
-				pkg.CommonTickerFromBinanceTicker(rawTicker))
+				commonticker.CommonTickerFromBinanceTicker(rawTicker))
 		}
 	}
 
 	return tickers, nil
 }
 
-func (b *TickerStream) LoadCache() [][]pkg.CommonTicker {
-	tickers := [][]pkg.CommonTicker{}
+func (b *TickerStream) LoadCache() [][]commonticker.CommonTicker {
+	tickers := [][]commonticker.CommonTicker{}
 
 	rows, err := b.cache.QueryAgeLessThan("ticker", 3600)
 	if err != nil {

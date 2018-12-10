@@ -16,11 +16,12 @@
 package pkg
 
 import (
-	"math"
-	"time"
 	"gitlab.com/crankykernel/cryptotrader/binance"
-	"sync"
+	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"math"
+	"sync"
+	"time"
 )
 
 type Aggregate struct {
@@ -55,7 +56,7 @@ type TickerMetrics struct {
 
 type TickerTracker struct {
 	Symbol     string
-	Ticks      []*CommonTicker
+	Ticks      []*commonticker.CommonTicker
 	Metrics    map[int]*TickerMetrics
 	LastUpdate time.Time
 	H24Metrics TickerMetrics
@@ -88,7 +89,7 @@ func init() {
 func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
-		Ticks:   []*CommonTicker{},
+		Ticks:   []*commonticker.CommonTicker{},
 		Trades:  []*binance.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 		Aggs:    make(map[int][]Aggregate),
@@ -101,7 +102,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	return &tracker;
 }
 
-func (t *TickerTracker) LastTick() *CommonTicker {
+func (t *TickerTracker) LastTick() *commonticker.CommonTicker {
 	if len(t.Ticks) == 0 {
 		return nil
 	}
@@ -280,7 +281,7 @@ func (t *TickerTracker) CalculateTrades() {
 	t.PruneTrades(now)
 }
 
-func (t *TickerTracker) Update(ticker CommonTicker) {
+func (t *TickerTracker) Update(ticker commonticker.CommonTicker) {
 	t.LastUpdate = time.Now()
 	t.Ticks = append(t.Ticks, &ticker)
 	now := ticker.Timestamp
@@ -452,7 +453,7 @@ func (t *TickerTrackerMap) GetTracker(symbol string) *TickerTracker {
 	return t.Trackers[symbol]
 }
 
-func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *CommonTicker {
+func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *commonticker.CommonTicker {
 	if tracker, ok := t.Trackers[symbol]; ok {
 		return tracker.LastTick()
 	}

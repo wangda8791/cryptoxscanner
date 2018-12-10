@@ -16,6 +16,7 @@
 package server
 
 import (
+	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg"
 	"gitlab.com/crankykernel/cryptoxscanner/pkg/binance"
 	"time"
@@ -195,8 +196,8 @@ func (b *BinanceRunner) Run() {
 	}()
 }
 
-func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers []pkg.CommonTicker, recalculate bool) {
-	channel := make(chan pkg.CommonTicker)
+func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers []commonticker.CommonTicker, recalculate bool) {
+	channel := make(chan commonticker.CommonTicker)
 	wg := sync.WaitGroup{}
 
 	handler := func() {
