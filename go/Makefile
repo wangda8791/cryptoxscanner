@@ -16,10 +16,12 @@ GO_LDFLAGS :=	-w -s \
 
 all: $(APP)
 
-$(APP): BIN ?= $(APP)
+$(APP): EXE := $(shell go env GOEXE)
+$(APP): BIN := $(APP)$(EXE)
+$(APP): DIR ?= .
 $(APP):
 	test -e ../webapp/dist && $(GOPATH)/bin/packr -z -v || true
-	go build -o $(BIN) --tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)"
+	go build -o $(DIR)/$(BIN) --tags "$(GO_TAGS)" -ldflags "$(GO_LDFLAGS)"
 
 install-deps:
 	go get github.com/gobuffalo/packr/packr

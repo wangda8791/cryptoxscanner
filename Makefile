@@ -36,13 +36,10 @@ docker-build:
 
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)
-dist: GOEXE=$(shell go env GOEXE)
-dist: OUTDIR=$(APP)-$(VERSION)-$(GOOS)-$(GOARCH)
-dist: OUTBIN=$(APP)$(GOEXE)
+dist: DIR = $(APP)-$(VERSION)-$(GOOS)-$(GOARCH)
 dist:
-	rm -rf dist/$(OUTDIR)
-	mkdir -p dist/$(OUTDIR)
+	rm -rf dist/$(DIR) && mkdir -p dist/$(DIR)
 	test "${SKIP_WEBAPP}" || (cd webapp && $(MAKE))
-	cd go && $(MAKE) BIN=../dist/$(OUTDIR)/$(OUTBIN)
-	cp README.md LICENSE.txt dist/$(OUTDIR)/
-	(cd dist && zip -r $(OUTDIR).zip $(OUTDIR))
+	cd go && $(MAKE) DIR=../dist/$(DIR)
+	cp README.md LICENSE.txt dist/$(DIR)/
+	cd dist && zip -r $(DIR).zip $(DIR)
