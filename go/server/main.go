@@ -16,19 +16,19 @@
 package server
 
 import (
-	"time"
-	"net/http"
-	"encoding/json"
-	"fmt"
-	"github.com/gorilla/mux"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg/binance"
 	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
-	_ "net/http/pprof"
+	"encoding/json"
+	"fmt"
 	"github.com/gobuffalo/packr"
+	"github.com/gorilla/mux"
+	"gitlab.com/crankykernel/cryptoxscanner/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"gitlab.com/crankykernel/cryptoxscanner/version"
+	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
+	"time"
 )
 
 var salt []byte
@@ -87,9 +87,9 @@ func ServerMain(options Options) {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", options.Port), router))
 }
 
-func buildUpdateMessage(tracker *pkg.TickerTracker) map[string]interface{} {
+func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
 	last := tracker.LastTick()
-	key := last.Symbol
+	key := tracker.Symbol
 
 	message := map[string]interface{}{
 		"symbol": key,
@@ -123,7 +123,7 @@ func buildUpdateMessage(tracker *pkg.TickerTracker) map[string]interface{} {
 		"timestamp": last.Timestamp,
 	}
 
-	for _, bucket := range pkg.Buckets {
+	for _, bucket := range Buckets {
 		metrics := tracker.Metrics[bucket]
 
 		message[fmt.Sprintf("l_%d", bucket)] = metrics.Low
@@ -142,10 +142,13 @@ func buildUpdateMessage(tracker *pkg.TickerTracker) map[string]interface{} {
 func pingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "application/json")
 	encoder := json.NewEncoder(w)
-	encoder.Encode(map[string]interface{}{
-		"version": pkg.BuildNumberAsInt(),
-		"buildNumber": pkg.BuildNumberAsInt(),
-	})
+	if err := encoder.Encode(map[string]interface{}{
+		"version":     version.BuildNumberAsInt(),
+		"buildNumber": version.BuildNumberAsInt(),
+	}); err != nil {
+		log.WithError(err).WithField("handler", "ping").
+			Errorf("Failed to encode response to JSON")
+	}
 }
 
 func webSocketsStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -180,8 +183,11 @@ func webSocketsStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoder := json.NewEncoder(w)
-	encoder.Encode(map[string]interface{}{
+	if err := encoder.Encode(map[string]interface{}{
 		"paths":   paths,
 		"clients": clients,
-	})
+	}); err != nil {
+		log.WithError(err).WithField("handler", "ws-status").
+			Errorf("Failed to encode response to JSON")
+	}
 }

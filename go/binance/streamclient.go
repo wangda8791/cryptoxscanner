@@ -16,23 +16,23 @@
 package binance
 
 import (
-	"gitlab.com/crankykernel/cryptotrader/binance"
-	"time"
 	"encoding/json"
+	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"time"
 )
 
 type StreamClient struct {
-	name          string
-	client        *binance.StreamClient
-	streams       []string
+	name    string
+	client  *binance.StreamClient
+	streams []string
 }
 
 func NewStreamClient(name string, streams ...string) *StreamClient {
 	return &StreamClient{
-		name:          name,
-		client:        binance.NewStreamClient(),
-		streams:       streams,
+		name:    name,
+		client:  binance.NewStreamClient(),
+		streams: streams,
 	}
 }
 

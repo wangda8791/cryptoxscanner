@@ -13,12 +13,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-package pkg
+package server
 
 import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"gitlab.com/crankykernel/cryptoxscanner/metrics"
 	"math"
 	"sync"
 	"time"
@@ -69,6 +70,15 @@ type TickerTracker struct {
 	HaveVwap        bool
 	HaveTotalVolume bool
 	HaveNetVolume   bool
+
+	Histogram struct {
+		TradeCount     []uint64
+		SellTradeCount []uint64
+		BuyTradeCount  []uint64
+		Volume         []float64
+		SellVolume     []float64
+		BuyVolume      []float64
+	}
 }
 
 var Buckets []int
@@ -99,7 +109,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 		tracker.Metrics[i] = &TickerMetrics{}
 	}
 
-	return &tracker;
+	return &tracker
 }
 
 func (t *TickerTracker) LastTick() *commonticker.CommonTicker {
@@ -118,7 +128,7 @@ func (t *TickerTracker) Recalculate() {
 	}
 }
 
-func (t *TickerTracker) CalculateRSI(aggs []Aggregate) (float64) {
+func (t *TickerTracker) CalculateRSI(aggs []Aggregate) float64 {
 	if aggs == nil {
 		return 0
 	}
@@ -232,16 +242,19 @@ func (t *TickerTracker) CalculateTicks() {
 // - Total volume
 // - Net volume
 func (t *TickerTracker) CalculateTrades() {
+	now := time.Now()
+	t.PruneTrades(now)
+
 	count := len(t.Trades)
 	if count < 1 {
 		return
 	}
 
-	now := time.Now()
+	volumeHistogram := metrics.NewVolumeHistogramCalculator()
 
 	t.HaveNetVolume = true
 	t.HaveTotalVolume = true
-	t.HaveVwap = true;
+	t.HaveVwap = true
 	vwapPrice := float64(0)
 	vwapVolume := float64(0)
 	buyVolume := float64(0)
@@ -267,6 +280,8 @@ func (t *TickerTracker) CalculateTrades() {
 
 		bucket := (int(age.Seconds()) / 60) + 1
 
+		volumeHistogram.AddTrade(trade)
+
 		metrics := t.Metrics[bucket]
 		if metrics == nil {
 			continue
@@ -278,7 +293,12 @@ func (t *TickerTracker) CalculateTrades() {
 		metrics.Vwap = vwap
 	}
 
-	t.PruneTrades(now)
+	t.Histogram.TradeCount = volumeHistogram.TradeCount[:]
+	t.Histogram.SellTradeCount = volumeHistogram.SellTradeCount[:]
+	t.Histogram.BuyTradeCount = volumeHistogram.BuyTradeCount[:]
+	t.Histogram.Volume = volumeHistogram.Volume[:]
+	t.Histogram.SellVolume = volumeHistogram.SellVolume[:]
+	t.Histogram.BuyVolume = volumeHistogram.BuyVolume[:]
 }
 
 func (t *TickerTracker) Update(ticker commonticker.CommonTicker) {
@@ -414,7 +434,7 @@ func (t *TickerTracker) PruneTrades(now time.Time) {
 	chop := 0
 	for i, trade := range t.Trades {
 		age := now.Sub(trade.Timestamp())
-		if age < time.Hour {
+		if age < time.Minute*210 {
 			break
 		}
 		chop = i + 1

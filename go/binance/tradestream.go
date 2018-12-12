@@ -16,13 +16,13 @@
 package binance
 
 import (
-	"gitlab.com/crankykernel/cryptotrader/binance"
 	"fmt"
-	"strings"
-	"time"
-	"sync"
+	"gitlab.com/crankykernel/cryptotrader/binance"
+	"gitlab.com/crankykernel/cryptoxscanner/db"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
+	"strings"
+	"sync"
+	"time"
 )
 
 type StreamAggTrade = binance.StreamAggTrade
@@ -164,7 +164,7 @@ func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 			case channel <- next:
 				queue = queue[1:]
 			default:
-				goto Next;
+				goto Next
 			}
 		}
 

@@ -16,9 +16,9 @@
 package main
 
 import (
-	"gitlab.com/crankykernel/cryptoxscanner/cmd"
 	"github.com/inconshreveable/mousetrap"
 	"github.com/spf13/cobra"
+	"gitlab.com/crankykernel/cryptoxscanner/cmd"
 	"os"
 )
 

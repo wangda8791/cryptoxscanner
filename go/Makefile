@@ -7,7 +7,7 @@ GO_TAGS :=	json1
 
 BUILD :=	$(shell cat ../BUILD)
 
-BUILD_GO_VAR :=	gitlab.com/crankykernel/cryptoxscanner/pkg.BuildNumber
+BUILD_GO_VAR :=	gitlab.com/crankykernel/cryptoxscanner/version.BuildNumber
 
 GO_LDFLAGS :=	-w -s \
 		-X \"$(BUILD_GO_VAR)=$(BUILD)\"

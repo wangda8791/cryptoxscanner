@@ -1,4 +1,4 @@
-package pkg
+package version
 
 import (
 	"gitlab.com/crankykernel/cryptoxscanner/log"

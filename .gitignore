@@ -6,5 +6,5 @@
 /dist
 
 *-packr.go
-/*.sqlite*
+*.sqlite*
 /.cache

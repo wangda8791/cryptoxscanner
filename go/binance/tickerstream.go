@@ -18,8 +18,8 @@ package binance
 import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
+	"gitlab.com/crankykernel/cryptoxscanner/db"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg/db"
 	"sync"
 	"time"
 )

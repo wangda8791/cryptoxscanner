@@ -16,12 +16,12 @@
 package server
 
 import (
-	"github.com/gorilla/websocket"
-	"net/http"
 	"encoding/json"
-	"sync"
-	"strings"
+	"github.com/gorilla/websocket"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"net/http"
+	"strings"
+	"sync"
 )
 
 var wsConnectionTracker *WsConnectionTracker
@@ -223,7 +223,7 @@ Done:
 func (h *TickerWebSocketHandler) readLoop(client *WebSocketClient) {
 	for {
 		if _, _, err := client.conn.ReadMessage(); err != nil {
-			break;
+			break
 		}
 	}
 	client.sendChannel <- nil

@@ -17,12 +17,12 @@ package db
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"fmt"
-	"os"
+	_ "github.com/mattn/go-sqlite3"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
-	"time"
+	"os"
 	"sync"
+	"time"
 )
 
 const defaultCacheTtl = 3600 * 2

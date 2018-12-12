@@ -16,27 +16,26 @@
 package server
 
 import (
-	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg"
-	"gitlab.com/crankykernel/cryptoxscanner/pkg/binance"
-	"time"
 	"fmt"
-	"sync"
-	"runtime"
-	"math"
+	"gitlab.com/crankykernel/cryptoxscanner/binance"
+	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"math"
+	"runtime"
+	"sync"
+	"time"
 )
 
 type BinanceRunner struct {
-	trackers    *pkg.TickerTrackerMap
-	websocket   *TickerWebSocketHandler
-	subscribers map[string]map[chan interface{}]bool
+	trackers     *TickerTrackerMap
+	websocket    *TickerWebSocketHandler
+	subscribers  map[string]map[chan interface{}]bool
 	tickerStream *binance.TickerStream
 }
 
 func NewBinanceRunner() *BinanceRunner {
 	feed := BinanceRunner{
-		trackers: pkg.NewTickerTrackerMap(),
+		trackers: NewTickerTrackerMap(),
 	}
 	return &feed
 }
@@ -146,25 +145,25 @@ func (b *BinanceRunner) Run() {
 
 					if tracker.HaveVwap {
 						for i, k := range tracker.Metrics {
-							update[fmt.Sprintf("vwap_%dm", i)] = pkg.Round8(k.Vwap)
+							update[fmt.Sprintf("vwap_%dm", i)] = Round8(k.Vwap)
 						}
 					}
 
 					if tracker.HaveTotalVolume {
 						for i, k := range tracker.Metrics {
-							update[fmt.Sprintf("total_volume_%d", i)] = pkg.Round8(k.TotalVolume)
+							update[fmt.Sprintf("total_volume_%d", i)] = Round8(k.TotalVolume)
 						}
 					}
 
 					if tracker.HaveNetVolume {
 						for i, k := range tracker.Metrics {
-							update[fmt.Sprintf("nv_%d", i)] = pkg.Round8(k.NetVolume);
+							update[fmt.Sprintf("nv_%d", i)] = Round8(k.NetVolume)
 						}
 					}
 
 					for i, k := range tracker.Metrics {
 						if !math.IsNaN(k.RSI) {
-							update[fmt.Sprintf("rsi_%d", i*60)] = pkg.Round8(k.RSI)
+							update[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
 						}
 					}
 
@@ -178,12 +177,12 @@ func (b *BinanceRunner) Run() {
 						}
 					}
 				}
-				if err := b.websocket.Broadcast(&TickerStream{Tickers: &message,}); err != nil {
+				if err := b.websocket.Broadcast(&TickerStream{Tickers: &message}); err != nil {
 					log.Printf("error: broadcasting message: %v", err)
 				}
 
 				now := time.Now()
-				lastUpdate = now;
+				lastUpdate = now
 				processingTime := now.Sub(loopStartTime) - waitTime
 				lagTime := now.Sub(lastServerTickerTimestamp)
 				tradeLag := now.Sub(lastTradeTime)
@@ -196,7 +195,7 @@ func (b *BinanceRunner) Run() {
 	}()
 }
 
-func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers []commonticker.CommonTicker, recalculate bool) {
+func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []commonticker.CommonTicker, recalculate bool) {
 	channel := make(chan commonticker.CommonTicker)
 	wg := sync.WaitGroup{}
 
@@ -230,7 +229,7 @@ func (b *BinanceRunner) updateTrackers(trackers *pkg.TickerTrackerMap, tickers [
 	wg.Wait()
 }
 
-func (b *BinanceRunner) reloadStateFromRedis(trackers *pkg.TickerTrackerMap) {
+func (b *BinanceRunner) reloadStateFromRedis(trackers *TickerTrackerMap) {
 	log.Infof("Restoring Binance ticks from cache.")
 	restoreCount := 0
 

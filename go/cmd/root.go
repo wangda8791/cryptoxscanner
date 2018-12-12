@@ -27,7 +27,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "cryptoxscanner",
+	Use: "cryptoxscanner",
 }
 
 func Execute() {

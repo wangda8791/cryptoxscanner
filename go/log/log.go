@@ -16,14 +16,14 @@
 package log
 
 import (
-	"github.com/sirupsen/logrus"
-	"path/filepath"
-	"fmt"
-	"runtime"
 	"encoding/json"
-	"os"
-	"log"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh/terminal"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type Fields = logrus.Fields
