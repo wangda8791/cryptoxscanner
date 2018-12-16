@@ -18,7 +18,6 @@ package server
 import (
 	"fmt"
 	"gitlab.com/crankykernel/cryptoxscanner/binance"
-	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"math"
 	"runtime"
@@ -127,8 +126,8 @@ func (b *BinanceRunner) Run() {
 
 				lastServerTickerTimestamp := time.Time{}
 				for _, ticker := range tickers {
-					if ticker.Timestamp.After(lastServerTickerTimestamp) {
-						lastServerTickerTimestamp = ticker.Timestamp
+					if ticker.Timestamp().After(lastServerTickerTimestamp) {
+						lastServerTickerTimestamp = ticker.Timestamp()
 					}
 				}
 
@@ -195,15 +194,15 @@ func (b *BinanceRunner) Run() {
 	}()
 }
 
-func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []commonticker.CommonTicker, recalculate bool) {
-	channel := make(chan commonticker.CommonTicker)
+func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []binance.Stream24Ticker, recalculate bool) {
+	channel := make(chan binance.Stream24Ticker)
 	wg := sync.WaitGroup{}
 
 	handler := func() {
 		count := 0
 		for {
 			ticker := <-channel
-			if ticker.Timestamp.IsZero() {
+			if ticker.EventTime == 0 {
 				break
 			}
 			count += 1

@@ -17,7 +17,6 @@ package server
 
 import (
 	"gitlab.com/crankykernel/cryptotrader/binance"
-	"gitlab.com/crankykernel/cryptoxscanner/commonticker"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/metrics"
 	"math"
@@ -57,7 +56,7 @@ type TickerMetrics struct {
 
 type TickerTracker struct {
 	Symbol     string
-	Ticks      []*commonticker.CommonTicker
+	Ticks      []*binance.Stream24Ticker
 	Metrics    map[int]*TickerMetrics
 	LastUpdate time.Time
 	H24Metrics TickerMetrics
@@ -99,7 +98,7 @@ func init() {
 func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
-		Ticks:   []*commonticker.CommonTicker{},
+		Ticks:   []*binance.Stream24Ticker{},
 		Trades:  []*binance.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 		Aggs:    make(map[int][]Aggregate),
@@ -112,7 +111,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	return &tracker
 }
 
-func (t *TickerTracker) LastTick() *commonticker.CommonTicker {
+func (t *TickerTracker) LastTick() *binance.Stream24Ticker {
 	if len(t.Ticks) == 0 {
 		return nil
 	}
@@ -180,19 +179,19 @@ func (t *TickerTracker) CalculateTicks() {
 		return
 	}
 
-	low := last.LastPrice
-	high := last.LastPrice
+	low := last.CurrentDayClose
+	high := last.CurrentDayClose
 
 	for i := count - 2; i >= 0; i-- {
 		tick := t.Ticks[i]
-		age := now.Sub(tick.Timestamp)
+		age := now.Sub(tick.Timestamp())
 		bucket := (int(age.Seconds()) / 60) + 1
 
-		if tick.LastPrice < low {
-			low = tick.LastPrice
+		if tick.CurrentDayClose < low {
+			low = tick.CurrentDayClose
 		}
-		if tick.LastPrice > high {
-			high = tick.LastPrice
+		if tick.CurrentDayClose > high {
+			high = tick.CurrentDayClose
 		}
 
 		metrics := t.Metrics[bucket]
@@ -200,18 +199,18 @@ func (t *TickerTracker) CalculateTicks() {
 			continue
 		}
 
-		if tick.LastPrice > 0 {
-			priceChange := last.LastPrice - tick.LastPrice
-			priceChangePercent := Round3(priceChange / tick.LastPrice * 100)
+		if tick.CurrentDayClose > 0 {
+			priceChange := last.CurrentDayClose - tick.CurrentDayClose
+			priceChangePercent := Round3(priceChange / tick.CurrentDayClose * 100)
 			metrics.PriceChangePercent = priceChangePercent
 		} else {
 			metrics.PriceChangePercent = 0
 		}
 
 		// Volume rate of change (VROC).
-		if tick.QuoteVolume > 0 {
-			volumeChange := last.QuoteVolume - tick.QuoteVolume
-			volumeChangePercent := Round3(volumeChange / tick.QuoteVolume * 100)
+		if tick.TotalQuoteVolume > 0 {
+			volumeChange := last.TotalQuoteVolume - tick.TotalQuoteVolume
+			volumeChangePercent := Round3(volumeChange / tick.TotalQuoteVolume * 100)
 			metrics.VolumeChangePercent = volumeChangePercent
 		} else {
 			metrics.VolumeChangePercent = 0
@@ -223,7 +222,7 @@ func (t *TickerTracker) CalculateTicks() {
 		if low > 0 {
 			metrics.RangePercent = Round3(metrics.Range / low * 100)
 		} else if high > 0 {
-			// Low is 0, but high is not. Is that 100%?
+			// LowPrice is 0, but high is not. Is that 100%?
 			metrics.RangePercent = 100
 		} else {
 			metrics.RangePercent = 0
@@ -231,10 +230,10 @@ func (t *TickerTracker) CalculateTicks() {
 	}
 
 	// Some 24 hour metrics.
-	t.H24Metrics.High = last.High
-	t.H24Metrics.Low = last.Low
-	t.H24Metrics.Range = Round8(last.High - last.Low)
-	t.H24Metrics.RangePercent = Round3(t.H24Metrics.Range / last.Low * 100)
+	t.H24Metrics.High = last.HighPrice
+	t.H24Metrics.Low = last.LowPrice
+	t.H24Metrics.Range = Round8(last.HighPrice - last.LowPrice)
+	t.H24Metrics.RangePercent = Round3(t.H24Metrics.Range / last.LowPrice * 100)
 }
 
 // Calculate values that depend on actual trades:
@@ -301,13 +300,13 @@ func (t *TickerTracker) CalculateTrades() {
 	t.Histogram.BuyVolume = volumeHistogram.BuyVolume[:]
 }
 
-func (t *TickerTracker) Update(ticker commonticker.CommonTicker) {
+func (t *TickerTracker) Update(ticker binance.Stream24Ticker) {
 	t.LastUpdate = time.Now()
 	t.Ticks = append(t.Ticks, &ticker)
-	now := ticker.Timestamp
+	now := ticker.Timestamp()
 	for {
 		first := t.Ticks[0]
-		if now.Sub(first.Timestamp) > (time.Minute*60)+1 {
+		if now.Sub(first.Timestamp()) > (time.Minute*60)+1 {
 			t.Ticks = t.Ticks[1:]
 		} else {
 			break
@@ -473,7 +472,7 @@ func (t *TickerTrackerMap) GetTracker(symbol string) *TickerTracker {
 	return t.Trackers[symbol]
 }
 
-func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *commonticker.CommonTicker {
+func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *binance.Stream24Ticker {
 	if tracker, ok := t.Trackers[symbol]; ok {
 		return tracker.LastTick()
 	}

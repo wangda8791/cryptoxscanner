@@ -93,12 +93,12 @@ func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
 
 	message := map[string]interface{}{
 		"symbol": key,
-		"close":  last.LastPrice,
+		"close":  last.CurrentDayClose,
 		"bid":    last.Bid,
 		"ask":    last.Ask,
-		"high":   last.High,
-		"low":    last.Low,
-		"volume": last.QuoteVolume,
+		"high":   last.HighPrice,
+		"low":    last.LowPrice,
+		"volume": last.TotalQuoteVolume,
 
 		"price_change_pct": map[string]float64{
 			"1m":  tracker.Metrics[1].PriceChangePercent,
@@ -106,7 +106,7 @@ func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
 			"10m": tracker.Metrics[10].PriceChangePercent,
 			"15m": tracker.Metrics[15].PriceChangePercent,
 			"1h":  tracker.Metrics[60].PriceChangePercent,
-			"24h": tracker.LastTick().PriceChangePct24,
+			"24h": tracker.LastTick().PriceChangePercent,
 		},
 
 		"volume_change_pct": map[string]float64{
@@ -120,7 +120,7 @@ func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
 			"1h":  tracker.Metrics[60].VolumeChangePercent,
 		},
 
-		"timestamp": last.Timestamp,
+		"timestamp": last.Timestamp(),
 	}
 
 	for _, bucket := range Buckets {
