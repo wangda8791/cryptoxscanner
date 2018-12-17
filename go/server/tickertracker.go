@@ -51,6 +51,7 @@ type TickerMetrics struct {
 	TotalVolume float64
 	NetVolume   float64
 	BuyVolume   float64
+	SellVolume   float64
 	RSI         float64
 }
 
@@ -289,6 +290,7 @@ func (t *TickerTracker) CalculateTrades() {
 		metrics.NetVolume = netVolume
 		metrics.TotalVolume = totalVolume
 		metrics.BuyVolume = buyVolume
+		metrics.SellVolume = sellVolume
 		metrics.Vwap = vwap
 	}
 

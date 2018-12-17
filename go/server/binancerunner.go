@@ -157,6 +157,8 @@ func (b *BinanceRunner) Run() {
 					if tracker.HaveNetVolume {
 						for i, k := range tracker.Metrics {
 							update[fmt.Sprintf("nv_%d", i)] = Round8(k.NetVolume)
+							update[fmt.Sprintf("bv_%d", i)] = Round8(k.BuyVolume)
+							update[fmt.Sprintf("sv_%d", i)] = Round8(k.SellVolume)
 						}
 					}
 
