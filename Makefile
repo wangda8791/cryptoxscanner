@@ -30,7 +30,7 @@ docker-build:
 		-v `pwd`:/src \
 		-v `pwd`/.cache/node_modules:/src/webapp/node_modules \
 		-v `pwd`/.cache/go:/home/builder/go \
-		-w /src \
+		-u builder -w /src \
 		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 		cryptoxscanner-builder make install-deps build
 

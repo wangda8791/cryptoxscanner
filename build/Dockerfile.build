@@ -6,7 +6,8 @@ RUN yum -y install \
 	gcc \
 	gcc-c++ \
 	curl \
-	zip
+	zip \
+	sudo
 
 ENV NODE_V=10.14.1	
 RUN cd /usr/local && \
@@ -19,6 +20,6 @@ ENV PATH=/usr/local/go/bin:$PATH
 
 COPY /build/build-entrypoint.sh /
 
-RUN useradd builder
+RUN useradd -G wheel -p "" builder
 
 ENTRYPOINT ["/build-entrypoint.sh"]
