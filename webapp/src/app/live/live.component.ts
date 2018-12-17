@@ -98,6 +98,8 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
 
         filters: {
             maxRsi60: null,
+            minVol24: null,
+            maxVol24: null,
         }
     };
 
@@ -419,10 +421,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         ];
 
         // Buy volumes.
-        for (const x of ["1", "2", "3", "5", "15", "60"]) {
+        for (const r of ["1", "2", "3", "5", "15", "60"]) {
             const entry: any = {
-                title: `${x}mBV`,
-                name: `bv_${x}`,
+                title: `${r}mBV`,
+                name: `bv_${r}`,
                 type: "number",
                 format: ".2-2",
                 display: true,
@@ -431,10 +433,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         }
 
         // Sell volumes.
-        for (const x of ["1", "2", "3", "5", "15", "60"]) {
+        for (const r of ["1", "2", "3", "5", "15", "60"]) {
             const entry: any = {
-                title: `${x}mSV`,
-                name: `sv_${x}`,
+                title: `${r}mSV`,
+                name: `sv_${r}`,
                 type: "number",
                 format: ".2-2",
                 display: true,
@@ -638,6 +640,18 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
 
             if (maxRsi60) {
                 if (ticker.rsi_60 && ticker.rsi_60 > maxRsi60) {
+                    return false;
+                }
+            }
+
+            if (this.config.filters.maxVol24) {
+                if (ticker.volume > this.config.filters.maxVol24) {
+                    return false;
+                }
+            }
+
+            if (this.config.filters.minVol24) {
+                if (ticker.volume < this.config.filters.minVol24) {
                     return false;
                 }
             }

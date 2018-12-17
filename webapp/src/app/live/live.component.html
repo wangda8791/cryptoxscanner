@@ -1,4 +1,4 @@
-<div class="container-fluid p-0 p-md-2">
+<div class="container-fluid">
 
   <div style="position: fixed; top: 2px; left: 25%; width: 50%; z-index: 5000;">
     <div *ngIf="banner.show" [@bannerState]="banner.className"
@@ -7,7 +7,7 @@
     </div>
   </div>
 
-  <div class="row">
+  <div class="row mt-2">
     <div class="col">
       <div class="card">
         <div class="card-header">
@@ -165,6 +165,42 @@
                   <div class="input-group-append">
                     <button class="btn btn-secondary"
                             (click)="config.filters.maxRsi60=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="row">
+
+            <div class="col">
+              <div class="form-group">
+                <label>Max 24h Vol</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control"
+                         [(ngModel)]="config.filters.maxVol24">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary"
+                            (click)="config.filters.maxVol24=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="form-group">
+                <label>Min 24h Vol</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control"
+                         [(ngModel)]="config.filters.minVol24">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary"
+                            (click)="config.filters.minVol24=null">
                       <i class="fa fa-times-circle"></i>
                     </button>
                   </div>
