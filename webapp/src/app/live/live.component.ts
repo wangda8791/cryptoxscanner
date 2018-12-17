@@ -13,20 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import {
-    Component,
-    Directive,
-    ElementRef,
-    Input,
-    OnDestroy,
-    OnInit
-} from '@angular/core';
+import {Component, Directive, ElementRef, Input, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
-import {
-    BinanceBaseCoins,
-    ScannerApiService,
-    SymbolUpdate
-} from '../scanner-api.service';
+import {BinanceBaseCoins, ScannerApiService, SymbolUpdate} from '../scanner-api.service';
 import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Observable} from 'rxjs/Observable';
 import * as lodash from "lodash";
@@ -91,6 +80,8 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     private configKey: string = "binance.live.config";
 
     hasCharts: boolean = true;
+
+    showMoreFilters: boolean = false;
 
     config: any = {
         base: "BTC",
@@ -427,6 +418,30 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             }
         ];
 
+        // Buy volumes.
+        for (const x of ["1", "2", "3", "5", "15", "60"]) {
+            const entry: any = {
+                title: `${x}mBV`,
+                name: `bv_${x}`,
+                type: "number",
+                format: ".2-2",
+                display: true,
+            };
+            extendedVolumeHeaders.push(entry);
+        }
+
+        // Sell volumes.
+        for (const x of ["1", "2", "3", "5", "15", "60"]) {
+            const entry: any = {
+                title: `${x}mSV`,
+                name: `sv_${x}`,
+                type: "number",
+                format: ".2-2",
+                display: true,
+            };
+            extendedVolumeHeaders.push(entry);
+        }
+
         if (this.exchange == "binance") {
             this.headers.push.apply(this.headers, extendedVolumeHeaders);
         }
@@ -494,57 +509,57 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         }
 
         this.stream = this.connect().subscribe(
-                (update: any) => {
-                    if (this.banner.show) {
-                        console.log("Updating banner.");
-                        this.banner = {
-                            show: true,
-                            className: "alert-success",
-                            message: "Connected!",
-                        };
-                        setTimeout(() => {
-                            this.banner.show = false;
-                        }, 1000);
-                    }
-
-                    if (update == null) {
-                        // Connect signal.
-                        return;
-                    }
-
-                    const tickers: SymbolUpdate[] = update.tickers || update;
-
-                    // Put the tickers into a map.
-                    for (let i = 0, n = tickers.length; i < n; i++) {
-                        this.flattenTicker(tickers[i]);
-                        this.tickerMap[tickers[i].symbol] = tickers[i];
-                    }
-
-                    this.render();
-                },
-                (error) => {
+            (update: any) => {
+                if (this.banner.show) {
+                    console.log("Updating banner.");
                     this.banner = {
                         show: true,
-                        className: "alert-warning",
-                        message: "WebSocket error! Reconnecting.",
+                        className: "alert-success",
+                        message: "Connected!",
                     };
-                    console.log("websocket error:");
-                    console.log(error);
                     setTimeout(() => {
-                        this.startUpdates();
+                        this.banner.show = false;
                     }, 1000);
-                },
-                () => {
-                    this.banner = {
-                        show: true,
-                        className: "alert-warning",
-                        message: "WebSocket closed!",
-                    };
-                    console.log("websocket closed. Reconnecting.");
-                    setTimeout(() => {
-                        this.startUpdates();
-                    });
+                }
+
+                if (update == null) {
+                    // Connect signal.
+                    return;
+                }
+
+                const tickers: SymbolUpdate[] = update.tickers || update;
+
+                // Put the tickers into a map.
+                for (let i = 0, n = tickers.length; i < n; i++) {
+                    this.flattenTicker(tickers[i]);
+                    this.tickerMap[tickers[i].symbol] = tickers[i];
+                }
+
+                this.render();
+            },
+            (error) => {
+                this.banner = {
+                    show: true,
+                    className: "alert-warning",
+                    message: "WebSocket error! Reconnecting.",
+                };
+                console.log("websocket error:");
+                console.log(error);
+                setTimeout(() => {
+                    this.startUpdates();
+                }, 1000);
+            },
+            () => {
+                this.banner = {
+                    show: true,
+                    className: "alert-warning",
+                    message: "WebSocket closed!",
+                };
+                console.log("websocket closed. Reconnecting.");
+                setTimeout(() => {
+                    this.startUpdates();
                 });
+            });
     }
 
     /**
@@ -659,11 +674,11 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     private flattenTicker(ticker: SymbolUpdate) {
         for (const key of Object.keys(ticker.price_change_pct)) {
             ticker[`price_change_pct_${key}`] =
-                    ticker.price_change_pct[key];
+                ticker.price_change_pct[key];
         }
         for (const key of Object.keys(ticker.volume_change_pct)) {
             ticker[`volume_change_pct_${key}`] =
-                    ticker.volume_change_pct[key];
+                ticker.volume_change_pct[key];
         }
 
         ticker["spread"] = (ticker.ask - ticker.bid) / ticker.bid;

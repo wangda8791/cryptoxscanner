@@ -7,180 +7,178 @@
     </div>
   </div>
 
-  <nav class="navbar navbar-expand-md navbar-light bg-light app-toolbar">
-    <button class="navbar-toggler" type="button" data-toggle="collapse"
-            data-target=".app-toolbar-collapse" aria-controls="toolbarContent"
-            aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header">
 
-    <div class="collapse navbar-collapse app-toolbar-collapse"
-         id="toolbarContent">
+          <div class="row">
 
-      <div class="col">
-        <div class="input-group input-group-sm">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Base</div>
+            <div class="col">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                  <div class="input-group-text">Base</div>
+                </div>
+                <select class="form-control" [(ngModel)]="config.base"
+                        (change)="render()">
+                  <option *ngFor="let coin of baseTokens">{{coin}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                  <div class="input-group-text">Count</div>
+                </div>
+                <select class="form-control" [(ngModel)]="config.count"
+                        (change)="render()">
+                  <option>25</option>
+                  <option>50</option>
+                  <option>100</option>
+                  <option value="-1">All</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                  <div class="input-group-text"><i class="fa fa-search"></i></div>
+                </div>
+                <input type="text" class="form-control" [(ngModel)]="config.filter">
+                <div class="input-group-append">
+                  <button class="btn btn-secondary" (click)="config.filter=null">
+                    <i class="fa fa-times-circle"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle btn-sm btn-block"
+                        type="button"
+                        id="dropdownSelectColumns" data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false">
+                  Select Columns
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownSelectColumns"
+                     style="width: 100%; max-height: 300px; height: auto; overflow-x: hidden;">
+                  <a class="dropdown-item" href="javascript:void(0);"
+                     style="width: 100%;"
+                     (click)="showDefaultColumns(); saveConfig();">Default</a>
+                  <a *ngFor="let col of headers" class="dropdown-item"
+                     href="javascript:void(0)"
+                     (click)="config.visibleColumns[col.name] = !config.visibleColumns[col.name]; saveConfig();">
+                    <input type="checkbox"
+                           [(ngModel)]="config.visibleColumns[col.name]"
+                           (click)="saveConfig();">
+                    {{col.title}}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="col d-none d-md-block">
+              <button class="btn btn-secondary btn-sm btn-block" type="button"
+                      (click)="showMoreFilters = !showMoreFilters">
+                More...
+              </button>
+            </div>
           </div>
-          <select class="form-control" [(ngModel)]="config.base"
-                  (change)="render()">
-            <option *ngFor="let coin of baseTokens">{{coin}}</option>
-          </select>
+
+        </div>
+        <div *ngIf="showMoreFilters" class="card-body">
+
+          <div class="row">
+
+            <div class="col">
+              <div class="form-group">
+                <label>Min Price</label>
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control"
+                         [(ngModel)]="config.minPrice">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary" (click)="config.minPrice=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="form-group">
+                <label>Max Price</label>
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control"
+                         [(ngModel)]="config.maxPrice">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary" (click)="config.maxPrice=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="form-group">
+                <label>Max 24h Change</label>
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control"
+                         [(ngModel)]="config.max24Change">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary"
+                            (click)="config.max24Change=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="form-group">
+                <label>Min 24h Change</label>
+                <div class="input-group input-group-sm">
+                  <input type="text" class="form-control"
+                         [(ngModel)]="config.min24Change">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary"
+                            (click)="config.min24Change=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col">
+              <div class="form-group">
+                <label>Max RSI(1m)</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control"
+                         [(ngModel)]="config.filters.maxRsi60">
+                  <div class="input-group-append">
+                    <button class="btn btn-secondary"
+                            (click)="config.filters.maxRsi60=null">
+                      <i class="fa fa-times-circle"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
-
-      <div class="col">
-        <div class="input-group input-group-sm">
-          <div class="input-group-prepend">
-            <div class="input-group-text">Count</div>
-          </div>
-          <select class="form-control" [(ngModel)]="config.count"
-                  (change)="render()">
-            <option>25</option>
-            <option>50</option>
-            <option>100</option>
-            <option value="-1">All</option>
-          </select>
-        </div>
-
-      </div>
-
-      <div class="col">
-        <div class="input-group input-group-sm">
-          <div class="input-group-prepend">
-            <div class="input-group-text"><i class="fa fa-search"></i></div>
-          </div>
-          <input type="text" class="form-control" [(ngModel)]="config.filter">
-          <div class="input-group-append">
-            <button class="btn btn-secondary" (click)="config.filter=null">
-              <i class="fa fa-times-circle"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="dropdown">
-          <button class="btn btn-secondary dropdown-toggle btn-sm btn-block"
-                  type="button"
-                  id="dropdownSelectColumns" data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false">
-            Select Columns
-          </button>
-          <div class="dropdown-menu" aria-labelledby="dropdownSelectColumns"
-               style="width: 100%; max-height: 300px; height: auto; overflow-x: hidden;">
-            <a class="dropdown-item" href="javascript:void(0);"
-               style="width: 100%;"
-               (click)="showDefaultColumns(); saveConfig();">Default</a>
-            <a *ngFor="let col of headers" class="dropdown-item"
-               href="javascript:void(0)"
-               (click)="config.visibleColumns[col.name] = !config.visibleColumns[col.name]; saveConfig();">
-              <input type="checkbox"
-                     [(ngModel)]="config.visibleColumns[col.name]"
-                     (click)="saveConfig();">
-              {{col.title}}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div class="col d-none d-md-block">
-        <button class="btn btn-secondary btn-sm btn-block" type="button"
-                data-toggle="collapse"
-                data-target="#moreFilters" aria-expanded="false"
-                aria-controls="collapseExample">
-          More...
-        </button>
-      </div>
-
     </div>
-
-  </nav>
-
-  <div class="_collapse app-toolbar-collapse" id="moreFilters">
-    <nav class="navbar navbar-light bg-light app-toolbar">
-
-      <div class="col">
-        <div class="form-group">
-          <label>Min Price</label>
-          <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
-                   [(ngModel)]="config.minPrice">
-            <div class="input-group-append">
-              <button class="btn btn-secondary" (click)="config.minPrice=null">
-                <i class="fa fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="form-group">
-          <label>Max Price</label>
-          <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
-                   [(ngModel)]="config.maxPrice">
-            <div class="input-group-append">
-              <button class="btn btn-secondary" (click)="config.maxPrice=null">
-                <i class="fa fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="form-group">
-          <label>Max 24h Change</label>
-          <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
-                   [(ngModel)]="config.max24Change">
-            <div class="input-group-append">
-              <button class="btn btn-secondary"
-                      (click)="config.max24Change=null">
-                <i class="fa fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="form-group">
-          <label>Min 24h Change</label>
-          <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
-                   [(ngModel)]="config.min24Change">
-            <div class="input-group-append">
-              <button class="btn btn-secondary"
-                      (click)="config.min24Change=null">
-                <i class="fa fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col">
-        <div class="form-group">
-          <label>Max RSI(1m)</label>
-          <div class="input-group input-group-sm">
-            <input type="number" class="form-control"
-                   [(ngModel)]="config.filters.maxRsi60">
-            <div class="input-group-append">
-              <button class="btn btn-secondary"
-                      (click)="config.filters.maxRsi60=null">
-                <i class="fa fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </nav>
   </div>
+
   <br/>
 
   <span class="float-right">Last update: {{idleTime | number:"1.0-0"}} seconds
