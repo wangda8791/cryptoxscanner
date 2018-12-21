@@ -54,6 +54,18 @@
     </div>
     <ul class="list-group">
       <li class="list-group-item">
+        <b>2018-12-21</b>
+        <ul>
+          <li>Add 24h change, high, low and volume to symbol view.</li>
+          <li>Add buy and sell volumes for 1m to 60m on symbol view.</li>
+          <li>Previously a GET request was made to the scanner every second to update the order book. Now an initial
+            request will be done to seed the order book but then a websocket is opened to Binance to get order book
+            updates. The primary reason here was to reduce some load on my server. But order books updates should be
+            more timely now, if even only by a few milliseconds.
+          </li>
+        </ul>
+      </li>
+      <li class="list-group-item">
         <b>2018-11-30</b>
         <ul>
           <li>Removed KuCoin support to focus on Binance features.</li>
@@ -61,10 +73,10 @@
         <b>2018-05-07</b>
         <ul>
           <li>Source code is now available on <a
-            href="https://gitlab.com/crankykernel/cryptoxscanner">GitHub</a>.
+              href="https://gitlab.com/crankykernel/cryptoxscanner">GitHub</a>.
           </li>
           <li>Issue tracker also moved to <a
-            href="https://gitlab.com/crankykernel/cryptoxscanner/issues">GitHub</a>.
+              href="https://gitlab.com/crankykernel/cryptoxscanner/issues">GitHub</a>.
           </li>
         </ul>
       </li>
@@ -106,13 +118,13 @@
         <b>2018-04-24</b>
         <ul>
           <li>The top gainers and losers on the <a
-            [routerLink]="['/binance/monitor']">monitor</a> will display the
+              [routerLink]="['/binance/monitor']">monitor</a> will display the
             top 10 gainers and losers instead of just those matching the
             filters. Gainers and losers matching the filters will appear in the
             alerts panel.
           </li>
           <li>Added 2m, 3m and 4m net volume to the <a
-            [routerLink]="['/binance/live']">live</a> views.
+              [routerLink]="['/binance/live']">live</a> views.
           </li>
           <li>Added desktop notifications for alerts.</li>
         </ul>
