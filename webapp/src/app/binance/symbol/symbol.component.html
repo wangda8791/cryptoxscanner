@@ -162,10 +162,6 @@
           </td>
         </tr>
         <tr>
-          <th>24h %</th>
-          <td>{{lastUpdate.price_change_pct["24h"]}}</td>
-        </tr>
-        <tr>
           <th>1m %</th>
           <td>{{lastUpdate.price_change_pct["1m"]}}</td>
         </tr>
@@ -322,6 +318,28 @@
   </div>
 
   <div class="row">
+
+    <div class="col-2">
+      <table class="table table-bordered table-sm">
+        <tr>
+          <th>24h Change</th>
+          <td>{{lastUpdate.price_change_pct["24h"]}}%</td>
+        </tr>
+        <tr>
+          <th>24h High</th>
+          <td>{{lastUpdate.high}}</td>
+        </tr>
+        <tr>
+          <th>24h Low</th>
+          <td>{{lastUpdate.low}}</td>
+        </tr>
+        <tr>
+          <th>24h Volume</th>
+          <td>{{lastUpdate.volume | number:".3-3"}}</td>
+        </tr>
+      </table>
+    </div>
+
     <div class="col">
       <table class="table table-bordered table-sm">
         <tr>
@@ -343,7 +361,6 @@
           <td>{{lastUpdate.total_volume_10 | number:".3-3"}}</td>
           <td>{{lastUpdate.total_volume_15 | number:".3-3"}}</td>
           <td>{{lastUpdate.total_volume_60 | number:".3-3"}}</td>
-          <!--<td>{{lastUpdate.volume | number:".3-3"}}</td>-->
         </tr>
         <tr *ngIf="lastUpdate">
           <th>% Change</th>
@@ -364,6 +381,26 @@
           <td>{{lastUpdate.nv_10 | number:".3-3"}}</td>
           <td>{{lastUpdate.nv_15 | number:".3-3"}}</td>
           <td>{{lastUpdate.nv_60 | number:".3-3"}}</td>
+        </tr>
+        <tr *ngIf="lastUpdate">
+          <th>Buy Volume</th>
+          <td>{{lastUpdate.bv_1 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_2 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_3 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_5 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_10 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_15 | number:".3-3"}}</td>
+          <td>{{lastUpdate.bv_60 | number:".3-3"}}</td>
+        </tr>
+        <tr *ngIf="lastUpdate">
+          <th>Sell Volume</th>
+          <td>{{lastUpdate.sv_1 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_2 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_3 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_5 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_10 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_15 | number:".3-3"}}</td>
+          <td>{{lastUpdate.sv_60 | number:".3-3"}}</td>
         </tr>
       </table>
     </div>

@@ -110,6 +110,9 @@ export class ScannerApiService {
 export interface SymbolUpdate {
     symbol: string;
 
+    high: number;
+    low: number;
+
     price_change_pct: {
         [key: string]: number;
     };
