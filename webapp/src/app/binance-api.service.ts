@@ -111,43 +111,6 @@ export class RestKline implements Kline {
 
 }
 
-export class StreamKline implements Kline {
-
-    private kline: any = null;
-
-    constructor(kline: any) {
-        if (kline.k) {
-            this.kline = kline.k;
-        } else {
-            this.kline = kline;
-        }
-    }
-
-    get openTime(): number {
-        return this.kline.t;
-    }
-
-    get open(): number {
-        return +this.kline.o;
-    }
-
-    get close(): number {
-        return +this.kline.c;
-    }
-
-    get high(): number {
-        return +this.kline.h;
-    }
-
-    get low(): number {
-        return +this.kline.l;
-    }
-
-    get volume(): number {
-        return +this.kline.v;
-    }
-}
-
 @Injectable()
 export class BinanceApiService {
 

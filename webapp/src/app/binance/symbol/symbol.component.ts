@@ -23,7 +23,6 @@ import {
     BinanceApiService,
     Kline,
     KlineInterval,
-    StreamKline
 } from '../../binance-api.service';
 
 import * as Mousetrap from "mousetrap";
@@ -37,140 +36,6 @@ interface Trade {
     quantity: number;
     timestamp: Date;
     buyerMaker: boolean;
-}
-
-class CandleStickChart {
-
-    private chart: any = null;
-
-    private lastKline: Kline = null;
-
-    constructor(elementId: string) {
-        this.chart = Highcharts.stockChart(elementId, {
-            yAxis: [
-                {
-                    labels: {
-                        align: 'right',
-                        x: -3
-                    },
-                    title: {
-                        text: 'OHLC'
-                    },
-                    height: '60%',
-                    lineWidth: 2,
-                    resize: {
-                        enabled: true
-                    }
-                },
-                {
-                    labels: {
-                        align: 'right',
-                        x: -3
-                    },
-                    title: {
-                        text: 'Volume'
-                    },
-                    top: '65%',
-                    height: '35%',
-                    offset: 0,
-                    lineWidth: 2
-                }],
-            series: [
-                {
-                    name: "OHLC",
-                    type: "candlestick",
-                    data: [],
-                },
-                {
-                    name: "Volume",
-                    type: "column",
-                    yAxis: 1,
-                    data: [],
-                },
-            ],
-            rangeSelector: {
-                enabled: false,
-            },
-            navigator: {
-                enabled: false,
-            },
-            scrollbar: {
-                enabled: false,
-            },
-            time: {
-                useUTC: false,
-            },
-            plotOptions: {
-                candlestick: {
-                    color: "red",
-                    upColor: "green",
-                }
-            },
-            credits: {
-                enabled: false,
-            }
-        });
-    }
-
-    public update(kline: Kline, draw = true) {
-        console.log("Updating candlestick chart.");
-
-        const candlesticks: any = this.chart.series[0];
-        const volumes: any = this.chart.series[1];
-        const numPoints = candlesticks.yData.length;
-        let doShift = false;
-
-        if (this.lastKline && numPoints > 0 && this.lastKline.openTime == kline.openTime) {
-            candlesticks.removePoint(numPoints - 1, false);
-            volumes.removePoint(numPoints - 1, false);
-            doShift = false;
-        } else {
-            doShift = numPoints >= 60 ? true : false;
-        }
-
-        candlesticks.addPoint([
-            kline.openTime,
-            kline.open,
-            kline.high,
-            kline.low,
-            kline.close,
-        ], false, doShift);
-
-        volumes.addPoint([
-            kline.openTime,
-            kline.volume,
-        ], false, doShift);
-
-        this.lastKline = kline;
-
-        if (draw) {
-            this.redraw();
-        }
-
-        if (candlesticks.yData.length != volumes.yData.length) {
-            console.log("error: candlestick and volume lengths differ.");
-        }
-    }
-
-    public redraw() {
-        if (document.hidden) {
-            return;
-        }
-        this.chart.redraw(false);
-    }
-
-    public destroy() {
-        this.chart.destroy();
-        this.chart = null;
-    }
-
-    public clear(redraw: boolean) {
-        this.chart.series[0].setData([], false);
-        this.chart.series[1].setData([], false);
-        if (redraw) {
-            this.redraw();
-        }
-    }
 }
 
 class PriceChart {
@@ -403,8 +268,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
 
     maxTradeHistory: number = 20;
 
-    private candleStickChart: CandleStickChart = null;
-
     private tokenfxFeed: Subscription = null;
 
     lastUpdate: SymbolUpdate = null;
@@ -429,8 +292,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
     ATR: any = {};
 
     showTradingViewCharts: boolean = true;
-
-    useHighStocksCandleChart: boolean = false;
 
     constructor(private http: HttpClient,
                 private route: ActivatedRoute,
@@ -466,12 +327,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             console.log("Destroying price chart.");
             this.priceChart.destroy();
             this.priceChart = null;
-        }
-
-        if (this.candleStickChart) {
-            console.log("Destroying candlestick chart.");
-            this.candleStickChart.destroy();
-            this.candleStickChart = null;
         }
 
         if (this.tokenfxFeed) {
@@ -529,9 +384,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         switch (event.type) {
             case "visibilitychange":
                 this.priceChart.redraw();
-                if (this.useHighStocksCandleChart) {
-                    this.candleStickChart.redraw();
-                }
                 this.depthChart.redraw();
                 break;
             default:
@@ -555,10 +407,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
 
         this.depthChart = new DepthChart("depthChart");
 
-        if (this.useHighStocksCandleChart) {
-            this.candleStickChart = new CandleStickChart("candleStickChart");
-        }
-
         setInterval(() => {
             const depthUrl = "/api/1/binance/proxy/api/v1/depth";
             this.http.get(depthUrl, {
@@ -573,8 +421,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         }, 1000);
 
         this.start();
-
-        this.initKlines();
 
         for (const interval of [KlineInterval.H1, KlineInterval.D1]) {
             this.binanceApi.getKlines({
@@ -652,28 +498,9 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         return atrs.reverse();
     }
 
-    private initKlines() {
-        if (!this.useHighStocksCandleChart) {
-            return;
-        }
-        this.binanceApi.getKlines({
-            symbol: this.symbol.toUpperCase(),
-            interval: this.klineInterval,
-            limit: 60,
-        }).subscribe((klines) => {
-            for (let i = 0, n = klines.length; i < n; i++) {
-                this.candleStickChart.update(klines[i], false);
-            }
-            this.candleStickChart.redraw();
-            this.klinesReady = true;
-        });
-    }
-
     changeInterval(interval: KlineInterval) {
         this.klinesReady = false;
         this.klineInterval = interval;
-        this.candleStickChart.clear(true);
-        this.initKlines();
     }
 
     rawToTrade(raw): Trade {
@@ -750,24 +577,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             `${symbolLower}@aggTrade`,
         ];
 
-        if (this.useHighStocksCandleChart) {
-            const klineStreams = [
-                `${symbolLower}@kline_1m`,
-                `${symbolLower}@kline_3m`,
-                `${symbolLower}@kline_5m`,
-                `${symbolLower}@kline_15m`,
-                `${symbolLower}@kline_30m`,
-                `${symbolLower}@kline_1h`,
-                `${symbolLower}@kline_2h`,
-                `${symbolLower}@kline_4h`,
-                `${symbolLower}@kline_6h`,
-                `${symbolLower}@kline_8h`,
-                `${symbolLower}@kline_12h`,
-                `${symbolLower}@kline_1d`,
-            ];
-            streams.push(...klineStreams);
-        }
-
         const url = `wss://stream.binance.com:9443/stream?streams=` +
                 streams.join("/") + "/";
 
@@ -801,15 +610,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
 
         this.binanceStream.onmessage = (message) => {
             const data = JSON.parse(message.data);
-            if (data.stream.indexOf(`@kline_${this.klineInterval}`) > -1) {
-                if (this.klinesReady) {
-                    const kline = new StreamKline(data.data.k);
-                    if (this.useHighStocksCandleChart) {
-                        this.candleStickChart.update(kline);
-                    }
-                    this.lastKline = kline;
-                }
-            } else if (data.stream.indexOf("@aggTrade") > -1) {
+            if (data.stream.indexOf("@aggTrade") > -1) {
                 const trade = this.rawToTrade(data.data);
                 this.addTrade(trade);
             } else {
