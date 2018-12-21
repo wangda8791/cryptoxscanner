@@ -19,11 +19,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ScannerApiService, SymbolUpdate} from '../../scanner-api.service';
 import {Subscription} from 'rxjs/Subscription';
 
-import {
-    BinanceApiService,
-    Kline,
-    KlineInterval,
-} from '../../binance-api.service';
+import {BinanceApiService, Kline, KlineInterval} from '../../binance-api.service';
 
 import * as Mousetrap from "mousetrap";
 import * as $ from "jquery";
@@ -284,14 +280,11 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         return KlineInterval[key];
     });
 
-    orderBook = {
-        bids: [],
-        asks: [],
-    };
-
     ATR: any = {};
 
     showTradingViewCharts: boolean = true;
+
+    orderBook: OrderBookTracker = new OrderBookTracker();
 
     constructor(private http: HttpClient,
                 private route: ActivatedRoute,
@@ -371,9 +364,9 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         this.route.params.subscribe((params) => {
             this.symbol = params.symbol.toUpperCase();
             this.exchangeSymbol = this.symbol.replace(/BTC$/, "_BTC")
-                    .replace(/ETH$/, "_ETC")
-                    .replace(/BNB$/, "_BNB")
-                    .replace(/USDT$/, "_USDT");
+                .replace(/ETH$/, "_ETC")
+                .replace(/BNB$/, "_BNB")
+                .replace(/USDT$/, "_USDT");
             document.title = this.symbol.toUpperCase();
             this.reset();
             this.init();
@@ -395,30 +388,28 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         this.router.navigate(['/binance/chart', this.symbol]);
     }
 
+    initOrderBook() {
+        const depthUrl = "/api/1/binance/proxy/api/v1/depth";
+        this.http.get(depthUrl, {
+            params: new HttpParams()
+                .append("symbol", this.symbol.toUpperCase())
+                .append("limit", "1000")
+        }).subscribe((response: any) => {
+            this.orderBook.initialize(response);
+        });
+    }
+
     init() {
         this.baseAsset = this.symbol
-                .replace(/BTC$/, "")
-                .replace(/USDT$/, "")
-                .replace(/BNB$/, "")
-                .replace(/ETH$/, "");
+            .replace(/BTC$/, "")
+            .replace(/USDT$/, "")
+            .replace(/BNB$/, "")
+            .replace(/ETH$/, "");
         this.trades = [];
 
         this.priceChart = new PriceChart("priceChart");
 
         this.depthChart = new DepthChart("depthChart");
-
-        setInterval(() => {
-            const depthUrl = "/api/1/binance/proxy/api/v1/depth";
-            this.http.get(depthUrl, {
-                params: new HttpParams()
-                        .append("symbol", this.symbol.toUpperCase())
-                        .append("limit", "100")
-            }).subscribe((response: any) => {
-                this.depthChart.update(response.asks, response.bids);
-                this.orderBook.asks = response.asks.slice(0, 20);
-                this.orderBook.bids = response.bids.slice(0, 20);
-            });
-        }, 1000);
 
         this.start();
 
@@ -438,40 +429,40 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             this.showTradingViewCharts = true;
             setTimeout(() => {
                 const tv_1m = new TradingView.widget(
-                        {
-                            "autosize": true,
-                            "symbol": "BINANCE:" + this.symbol,
-                            "interval": "1",
-                            "timezone": "Etc/UTC",
-                            "theme": "Dark",
-                            "style": "1",
-                            "locale": "en",
-                            "toolbar_bg": "#f1f3f6",
-                            "enable_publishing": false,
-                            "withdateranges": true,
-                            "show_popup_button": true,
-                            "popup_width": "1000",
-                            "popup_height": "650",
-                            "container_id": "tradingview-1m",
-                        }
+                    {
+                        "autosize": true,
+                        "symbol": "BINANCE:" + this.symbol,
+                        "interval": "1",
+                        "timezone": "Etc/UTC",
+                        "theme": "Dark",
+                        "style": "1",
+                        "locale": "en",
+                        "toolbar_bg": "#f1f3f6",
+                        "enable_publishing": false,
+                        "withdateranges": true,
+                        "show_popup_button": true,
+                        "popup_width": "1000",
+                        "popup_height": "650",
+                        "container_id": "tradingview-1m",
+                    }
                 );
                 const tv_5m = new TradingView.widget(
-                        {
-                            "autosize": true,
-                            "symbol": "BINANCE:" + this.symbol,
-                            "interval": "5",
-                            "timezone": "Etc/UTC",
-                            "theme": "Dark",
-                            "style": "1",
-                            "locale": "en",
-                            "toolbar_bg": "#f1f3f6",
-                            "enable_publishing": false,
-                            "withdateranges": true,
-                            "show_popup_button": true,
-                            "popup_width": "1000",
-                            "popup_height": "650",
-                            "container_id": "tradingview-5m",
-                        }
+                    {
+                        "autosize": true,
+                        "symbol": "BINANCE:" + this.symbol,
+                        "interval": "5",
+                        "timezone": "Etc/UTC",
+                        "theme": "Dark",
+                        "style": "1",
+                        "locale": "en",
+                        "toolbar_bg": "#f1f3f6",
+                        "enable_publishing": false,
+                        "withdateranges": true,
+                        "show_popup_button": true,
+                        "popup_width": "1000",
+                        "popup_height": "650",
+                        "container_id": "tradingview-5m",
+                    }
                 );
             }, 0);
         }, 0);
@@ -534,32 +525,32 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         };
 
         this.tokenfxFeed = this.tokenfx.connectBinanceSymbol(this.symbol)
-                .subscribe((message: SymbolUpdate) => {
-                    if (message === null) {
-                        // Connected.
-                        this.tokenFxState = "connected";
-                        return;
-                    }
-                    if (message.symbol) {
-                        this.lastUpdate = message;
-                        this.lastPrice = message.close;
-                        this.priceChart.update({
-                            timestamp: new Date(message.timestamp),
-                            price: message.close,
-                        });
-                    }
-                }, (error) => {
-                    // Error.
-                    console.log("tokenfx socket error: ");
-                    console.log(error);
-                    this.tokenFxState = "errored";
-                    reconnect();
-                }, () => {
-                    // Closed.
-                    console.log("tokenfx socket closed.");
-                    this.tokenFxState = "closed";
-                    reconnect();
-                });
+            .subscribe((message: SymbolUpdate) => {
+                if (message === null) {
+                    // Connected.
+                    this.tokenFxState = "connected";
+                    return;
+                }
+                if (message.symbol) {
+                    this.lastUpdate = message;
+                    this.lastPrice = message.close;
+                    this.priceChart.update({
+                        timestamp: new Date(message.timestamp),
+                        price: message.close,
+                    });
+                }
+            }, (error) => {
+                // Error.
+                console.log("tokenfx socket error: ");
+                console.log(error);
+                this.tokenFxState = "errored";
+                reconnect();
+            }, () => {
+                // Closed.
+                console.log("tokenfx socket closed.");
+                this.tokenFxState = "closed";
+                reconnect();
+            });
     }
 
     private runBinanceSocket() {
@@ -575,10 +566,11 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         const symbolLower = this.symbol.toLowerCase();
         const streams = [
             `${symbolLower}@aggTrade`,
+            `${symbolLower}@depth`
         ];
 
         const url = `wss://stream.binance.com:9443/stream?streams=` +
-                streams.join("/") + "/";
+            streams.join("/") + "/";
 
         const ws = new WebSocket(url);
 
@@ -588,6 +580,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             console.log("stream opened:");
             console.log(event);
             this.binanceState = "connected";
+            this.initOrderBook();
         };
 
         this.binanceStream.onclose = (event) => {
@@ -613,10 +606,119 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             if (data.stream.indexOf("@aggTrade") > -1) {
                 const trade = this.rawToTrade(data.data);
                 this.addTrade(trade);
+            } else if (data.stream.indexOf("@depth") > -1) {
+                this.orderBook.update(data.data);
+                this.depthChart.update(this.orderBook.asks, this.orderBook.bids);
             } else {
                 console.log("Unhandled Binance stream message type: " + data.stream);
             }
 
         };
     }
+}
+
+interface DepthUpdate {
+    E: number;
+    // First update ID in event.
+    U: number;
+    // Final update ID in event.
+    u: number;
+    b: any[];
+    a: any[];
+}
+
+class OrderBookTracker {
+
+    private lastUpdateId = 0;
+
+    private initialized: boolean = false;
+
+    private queue: DepthUpdate[] = [];
+
+    bids: any[] = [];
+
+    asks: any[] = [];
+
+    private bidMap = {};
+
+    private askMap = {};
+
+    initialize(orderBook) {
+        this.lastUpdateId = orderBook.lastUpdateId;
+
+        for (const bid of orderBook.bids) {
+            const p = +bid[0];
+            const q = +bid[1];
+            this.bidMap[p] = q;
+        }
+
+        for (const ask of orderBook.asks) {
+            const p = +ask[0];
+            const q = +ask[1];
+            this.askMap[p] = q;
+        }
+
+        while (this.queue.length > 0) {
+            const update = this.queue.shift();
+            if (update.u > this.lastUpdateId) {
+                this.processUpdate(update);
+            }
+        }
+
+        this.render();
+
+        this.initialized = true;
+    }
+
+    private render() {
+        this.bids = Object.keys(this.bidMap).sort((a, b) => {
+            return (+b) - (+a);
+        }).map((key) => {
+            return [+key, +this.bidMap[key]];
+        }).slice(0, 30);
+
+        this.asks = Object.keys(this.askMap).sort((a, b) => {
+            return (+a) - (+b);
+        }).map((key) => {
+            return [+key, +this.askMap[key]];
+        }).slice(0, 30);
+    }
+
+    processUpdate(update: DepthUpdate) {
+        this.lastUpdateId = update.u;
+
+        for (const bid of update.b) {
+            const p = +bid[0];
+            const q = +bid[1];
+            if (+q === 0) {
+                delete(this.bidMap[p]);
+            } else {
+                this.bidMap[p] = q;
+            }
+        }
+
+        for (const ask of update.a) {
+            const p = +ask[0];
+            const q = +ask[1];
+            if (+q === 0) {
+                delete(this.askMap[p]);
+            } else {
+                this.askMap[p] = q;
+            }
+        }
+
+        this.render();
+    }
+
+    update(update: DepthUpdate) {
+        if (update.u <= this.lastUpdateId) {
+            return;
+        }
+        if (!this.initialized) {
+            this.queue.push(update);
+        } else {
+            this.processUpdate(update);
+        }
+    }
+
 }
