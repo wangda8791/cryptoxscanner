@@ -1,9 +1,9 @@
 BUILD :=	$(shell cat ../BUILD)
 
-all: update-build
+all: update-build-number
 	./node_modules/.bin/ng build --prod --aot
 
-update-build:
+update-build-number:
 	npm run update-build $(BUILD)
 
 clean:

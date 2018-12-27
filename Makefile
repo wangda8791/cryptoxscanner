@@ -9,6 +9,9 @@ build:
 	cd webapp && make
 	cd go && make
 
+update-build-number:
+	(cd webapp && make update-build-number)
+
 install-deps:
 	cd webapp && $(MAKE) $@
 	cd go && $(MAKE) $@
