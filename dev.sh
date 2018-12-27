@@ -2,7 +2,7 @@
 
 trap 'echo "Killing background jobs..."; kill $(jobs -p)' EXIT
 
-(cd webapp && make update-build && npm start) &
+(cd webapp && make update-build-number && npm start) &
 
 while true; do
     find go/* -name \*.go | grep -v packr.go | \
