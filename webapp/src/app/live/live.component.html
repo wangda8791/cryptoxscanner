@@ -68,8 +68,14 @@
                      style="width: 100%; max-height: 300px; height: auto; overflow-x: hidden;">
                   <a class="dropdown-item" href="javascript:void(0);"
                      style="width: 100%;"
-                     (click)="showDefaultColumns(); saveConfig();">Default</a>
-                  <a *ngFor="let col of headers" class="dropdown-item"
+                     (click)="showDefaultColumns()">Default</a>
+                  <a class="dropdown-item" href="javascript:void(0);"
+                     style="width: 100%;"
+                     (click)="deselectAllColumns()">Select None</a>
+                  <a class="dropdown-item" href="javascript:void(0);"
+                     style="width: 100%;"
+                     (click)="selectAllColumns()">Select All</a>
+                  <a *ngFor="let col of columns" class="dropdown-item"
                      href="javascript:void(0)"
                      (click)="config.visibleColumns[col.name] = !config.visibleColumns[col.name]; saveConfig();">
                     <input type="checkbox"
@@ -90,6 +96,7 @@
           </div>
 
         </div>
+
         <div *ngIf="showMoreFilters" class="card-body">
 
           <div class="row">
@@ -225,30 +232,36 @@
       <mdz-double-scroll>
         <table class="table table-sm table-bordered table-hover">
           <tr>
-            <th class="header-col">Symbol</th>
-            <th app-th-sortable *ngFor="let header of headers"
+            <th app-th-sortable class="header-col" (click)="sortBy('symbol')"
+                [name]="'symbol'" [sortBy]="config.sortBy" [sortOrder]="config.sortOrder"
+                [ngStyle]="{'background': 'symbol' == config.sortBy ? 'gainsboro' : ''}"
+            >Symbol
+            </th>
+            <th *ngIf="visibleColumns.length == 0" style="border: 0;">&nbsp;</th>
+            <th app-th-sortable *ngFor="let header of visibleColumns"
                 (click)="sortBy(header.name)"
                 [name]="header.name" [sortBy]="config.sortBy"
                 [sortOrder]="config.sortOrder"
                 [ngStyle]="{'background': header.name == config.sortBy ? 'gainsboro' : ''}"
-                [hidden]="config.visibleColumns[header.name] != true">
+            >
               {{header.title}}
             </th>
           </tr>
           <tr *ngFor="let ticker of tickers; let i = index; trackBy: trackBy"
               [title]="ticker.symbol"
               (mouseenter)="mouseEnter(i);" (mouseleave)="mouseEnter(null)">
-            <td class="header-col">
+            <td class="header-col"
+                [ngStyle]="{'background': 'symbol' == config.sortBy ? 'gainsboro' : ''}"
+            >
               <input type="checkbox"
                      [(ngModel)]="config.watching[ticker.symbol]"
                      (change)="saveConfig();">
-              <a *ngIf="hasCharts"
-                 [routerLink]="['/binance/symbol', ticker.symbol]"
-                 target="_blank">{{ticker.symbol}}</a>
-              <span *ngIf="!hasCharts">{{ticker.symbol}}</span>
+              <a
+                [routerLink]="['/binance/symbol', ticker.symbol]"
+                target="_blank">{{ticker.symbol}}</a>
             </td>
-            <td *ngFor="let col of headers;"
-                [hidden]="config.visibleColumns[col.name] != true"
+            <td *ngIf="visibleColumns.length == 0" style="border: 0;">&nbsp;</td>
+            <td *ngFor="let col of visibleColumns"
                 [ngStyle]="{'background': col.name == config.sortBy ? 'gainsboro' : ''}">
               <span [ngSwitch]="col.type"
                     [ngClass]="{'up': col.updown && ticker[col.name] > 0,

@@ -53,6 +53,7 @@ interface ColumnConfig {
     format?: string;
     routerLink?: string;
     fn?: any;
+    updown?: boolean;
 }
 
 @Component({
@@ -128,7 +129,9 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
 
     idleTime: number = 0;
 
-    headers: ColumnConfig[] = [];
+    columns: ColumnConfig[] = [];
+
+    visibleColumns: ColumnConfig[] = [];
 
     // The index of the row the user is currently hovering over.
     private activeRow: number = null;
@@ -136,8 +139,8 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     constructor(public tokenFxApi: ScannerApiService) {
     }
 
-    protected initHeaders() {
-        this.headers = [
+    private initHeaders() {
+        this.columns = [
             {
                 title: "Last",
                 name: "close",
@@ -268,21 +271,21 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         ];
 
         for (const i of [1, 2, 3, 5, 10, 15, 60]) {
-            this.headers.push({
+            this.columns.push({
                 title: `${i}mL`,
                 name: `l_${i}`,
                 type: "number",
                 format: ".8-8",
                 display: false,
             });
-            this.headers.push({
+            this.columns.push({
                 title: `${i}mH`,
                 name: `h_${i}`,
                 type: "number",
                 format: ".8-8",
                 display: false,
             });
-            this.headers.push({
+            this.columns.push({
                 title: `${i}mR%`,
                 name: `rp_${i}`,
                 type: "percent-number",
@@ -290,7 +293,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             });
         }
 
-        const extendedVolumeHeaders = [
+        this.columns.push(...[
             {
                 title: "1mNV",
                 name: "nv_1",
@@ -418,7 +421,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
             }
-        ];
+        ]);
 
         // Buy volumes.
         for (const r of ["1", "2", "3", "5", "15", "60"]) {
@@ -429,7 +432,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
             };
-            extendedVolumeHeaders.push(entry);
+            this.columns.push(entry);
         }
 
         // Sell volumes.
@@ -441,20 +444,31 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
             };
-            extendedVolumeHeaders.push(entry);
-        }
-
-        if (this.exchange == "binance") {
-            this.headers.push.apply(this.headers, extendedVolumeHeaders);
+            this.columns.push(entry);
         }
 
         this.restoreConfig();
     }
 
     showDefaultColumns() {
-        for (const col of this.headers) {
+        for (const col of this.columns) {
             this.config.visibleColumns[col.name] = col.display;
         }
+        this.saveConfig();
+    }
+
+    deselectAllColumns() {
+        for (const col of this.columns) {
+            this.config.visibleColumns[col.name] = false;
+        }
+        this.saveConfig();
+    }
+
+    selectAllColumns() {
+        for (const col of this.columns) {
+            this.config.visibleColumns[col.name] = true;
+        }
+        this.saveConfig();
     }
 
     restoreConfig() {
@@ -465,7 +479,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 if (!config.visibleColumns) {
                     this.showDefaultColumns();
                 } else {
-                    for (const col of this.headers) {
+                    for (const col of this.columns) {
                         if (!(col.name in config.visibleColumns)) {
                             config.visibleColumns[col.name] = col.display;
                         }
@@ -682,6 +696,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             tickers.splice(activeRow, 0, activeTicker);
         }
 
+        this.visibleColumns = this.columns.filter((col) => {
+            return this.config.visibleColumns[col.name];
+        });
+
         this.tickers = tickers;
     }
 
@@ -729,9 +747,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         } else {
             this.config.sortBy = column;
         }
-        console.log("Calling render...");
         this.render();
-        console.log("Render done.");
     }
 
     private toggleSortOrder() {
