@@ -172,6 +172,9 @@ func (b *BinanceRunner) Run() {
 						}
 					}
 
+					update["tvh"] = tracker.Histogram.Volume
+					update["bvh"] = tracker.Histogram.BuyVolume
+
 					for i, k := range tracker.Metrics {
 						if !math.IsNaN(k.RSI) {
 							update[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
