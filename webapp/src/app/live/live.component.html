@@ -248,41 +248,42 @@
             </th>
           </tr>
           <tr *ngFor="let ticker of tickers; let i = index; trackBy: trackBy"
-              [title]="ticker.symbol"
+              [title]="ticker.symbol.value"
               (mouseenter)="mouseEnter(i);" (mouseleave)="mouseEnter(null)">
             <td class="header-col"
                 [ngStyle]="{'background': 'symbol' == config.sortBy ? 'gainsboro' : ''}"
             >
               <input type="checkbox"
-                     [(ngModel)]="config.watching[ticker.symbol]"
+                     [(ngModel)]="config.watching[ticker.symbol.value]"
                      (change)="saveConfig();">
               <a
-                [routerLink]="['/binance/symbol', ticker.symbol]"
-                target="_blank">{{ticker.symbol}}</a>
+                [routerLink]="['/binance/symbol', ticker.symbol.value]"
+                target="_blank">{{ticker.symbol.value}}</a>
             </td>
             <td *ngIf="visibleColumns.length == 0" style="border: 0;">&nbsp;</td>
             <td *ngFor="let col of visibleColumns"
-                [ngStyle]="{'background': col.name == config.sortBy ? 'gainsboro' : ''}">
+                [ngStyle]="{'background': ticker[col.name].background_color}"
+            >
               <span [ngSwitch]="col.type"
-                    [ngClass]="{'up': col.updown && ticker[col.name] > 0,
-                            'down': col.updown && ticker[col.name] < 0}">
+                    [ngClass]="{'up': col.updown && ticker[col.name].value > 0,
+                            'down': col.updown && ticker[col.name].value < 0}">
                 <span *ngSwitchCase="'percent'"
-                      [ngClass]="{'up': ticker[col.name] > 0,
-                  'down': ticker[col.name] < 0}">
-                  {{ticker[col.name] | percent:col.format }}
+                      [ngClass]="{'up': ticker[col.name].value > 0,
+                  'down': ticker[col.name].value < 0}">
+                  {{ticker[col.name].value | percent:col.format }}
                 </span>
                 <span *ngSwitchCase="'percent-number'"
                       [ngClass]="{'up': ticker[col.name] > 0,
                   'down': ticker[col.name] < 0}">
-                  {{ticker[col.name] | number:".2-2" }}
+                  {{ticker[col.name].value | number:".2-2" }}
                 </span>
                 <span *ngSwitchCase="'number'">
-                  {{ticker[col.name] | number:col.format }}
+                  {{ticker[col.name].value | number:col.format }}
                 </span>
                 <span *ngSwitchDefault>
                   <a *ngIf="col.routerLink"
-                     [routerLink]="[col.routerLink, ticker[col.name]]">{{ticker[col.name]}}</a>
-                  <span *ngIf="!col.routerLink">{{ticker[col.name]}}</span>
+                     [routerLink]="[col.routerLink, ticker[col.name]]">{{ticker[col.name].value}}</a>
+                  <span *ngIf="!col.routerLink">{{ticker[col.name].value}}</span>
                 </span>
               </span>
             </td>

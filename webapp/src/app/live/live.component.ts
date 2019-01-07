@@ -115,7 +115,8 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     private tickerMap: any = {};
 
     // The sorted and filtered tickers to be displayed on the screen.
-    tickers: SymbolUpdate[] = [];
+    //tickers: SymbolUpdate[] = [];
+    tickers: any[] = [];
 
     banner: Banner = {
         show: true,
@@ -596,6 +597,15 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     render() {
         this.lastUpdate = new Date().getTime();
 
+        const volumePairs = [
+            ["bv_1", "sv_1"],
+            ["bv_2", "sv_2"],
+            ["bv_3", "sv_3"],
+            ["bv_5", "sv_5"],
+            ["bv_15", "sv_15"],
+            ["bv_60", "sv_60"],
+        ];
+
         // If active row is non-null the user is hovering on a row. Record
         // the index and the symbol.
         let activeSymbol: string = null;
@@ -700,7 +710,31 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             return this.config.visibleColumns[col.name];
         });
 
-        this.tickers = tickers;
+        this.tickers = tickers.map((ticker) => {
+            const new_ticker = {};
+            for (const key of Object.keys(ticker)) {
+                new_ticker[key] = {
+                    value: ticker[key],
+                };
+
+                if (this.config.sortBy == key) {
+                    new_ticker[key].background_color = "gainsboro";
+                }
+
+            }
+
+            // Colourize the buy volume based on if its greater than or less
+            // than the sell volume for the same time period.
+            for (const pair of volumePairs) {
+                if (ticker[pair[0]] > ticker[pair[1]]) {
+                    new_ticker[pair[0]].background_color = "lightgreen";
+                } else if (ticker[pair[0]] < ticker[pair[1]]) {
+                    new_ticker[pair[0]].background_color = "orange";
+                }
+            }
+
+            return new_ticker;
+        });
     }
 
     private flattenTicker(ticker: SymbolUpdate) {
