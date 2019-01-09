@@ -215,7 +215,71 @@
               </div>
             </div>
 
-          </div>
+          </div> <!-- row -->
+
+          <div class="row">
+            <div class="col">
+              <form (ngSubmit)="updateBlacklist()">
+                <div class="form-group">
+                  <label>Blacklist</label>
+                  <div class="input-group input-group-sm">
+                    <input class="form-control"
+                           id="blacklistInput"
+                           type="text"
+                           [formControl]="blacklistForm">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-secondary"
+                              (click)="clearBlacklist()"
+                              type="button"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                      <button
+                          class="btn"
+                          type="submit"
+                          [ngClass]="{'btn-primary': blacklistForm.value != config.blacklist,
+                                    'btn-outline-secondary': blacklistForm.value == config.blacklist}"
+                          [disabled]="blacklistForm.value == config.blacklist"
+                      >
+                        <i class="fas fa-check"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div> <!-- col -->
+          </div> <!-- row -->
+
+          <div class="row">
+            <div class="col">
+              <form (ngSubmit)="updateWhitelist()">
+                <div class="form-group">
+                  <label>Whitelist</label>
+                  <div class="input-group input-group-sm">
+                    <input
+                        id="whitelistInput"
+                        class="form-control" type="text" [formControl]="whitelistForm">
+                    <div class="input-group-append">
+                      <button type="button" class="btn btn-outline-secondary"
+                              (click)="clearWhitelist()"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                      <button
+                          type="submit"
+                          class="btn"
+                          [ngClass]="{'btn-primary': whitelistForm.value != config.whitelist,
+                                        'btn-outline-secondary': whitelistForm.value == config.whitelist}"
+                          [disabled]="whitelistForm.value == config.whitelist"
+                      >
+                        <i class="fas fa-check"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div> <!-- col -->
+          </div> <!-- row -->
 
         </div>
       </div>
@@ -257,8 +321,8 @@
                      [(ngModel)]="config.watching[ticker.symbol.value]"
                      (change)="saveConfig();">
               <a
-                [routerLink]="['/binance/symbol', ticker.symbol.value]"
-                target="_blank">{{ticker.symbol.value}}</a>
+                  [routerLink]="['/binance/symbol', ticker.symbol.value]"
+                  target="_blank">{{ticker.symbol.value}}</a>
             </td>
             <td *ngIf="visibleColumns.length == 0" style="border: 0;">&nbsp;</td>
             <td *ngFor="let col of visibleColumns"

@@ -19,6 +19,8 @@ import {BinanceBaseCoins, ScannerApiService, SymbolUpdate} from '../scanner-api.
 import {animate, state, style, transition, trigger} from "@angular/animations";
 import {Observable} from 'rxjs/Observable';
 import * as lodash from "lodash";
+import {FormControl} from "@angular/forms";
+import {ActivatedRoute, Router} from "@angular/router";
 
 declare var localStorage: any;
 
@@ -101,7 +103,10 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             maxRsi60: null,
             minVol24: null,
             maxVol24: null,
-        }
+        },
+
+        blacklist: "",
+        whitelist: "",
     };
 
     private stream: Subscription = null;
@@ -137,7 +142,13 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     // The index of the row the user is currently hovering over.
     private activeRow: number = null;
 
-    constructor(public tokenFxApi: ScannerApiService) {
+    blacklistForm = new FormControl('');
+
+    whitelistForm = new FormControl('');
+
+    constructor(public tokenFxApi: ScannerApiService,
+                private route: ActivatedRoute,
+                private router: Router) {
     }
 
     private initHeaders() {
@@ -451,6 +462,48 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         this.restoreConfig();
     }
 
+    updateBlacklist() {
+        this.updateQueryParams();
+        document.getElementById("blacklistInput").blur();
+    }
+
+    clearBlacklist() {
+        this.blacklistForm.setValue(undefined);
+        this.updateBlacklist();
+    }
+
+    updateWhitelist() {
+        this.updateQueryParams();
+        document.getElementById("whitelistInput").blur();
+    }
+
+    clearWhitelist() {
+        this.whitelistForm.setValue("");
+        this.updateWhitelist();
+    }
+
+    private previousQueryParams = {};
+
+    private updateQueryParams() {
+        let queryParams = Object.assign({}, this.previousQueryParams);
+
+        if (this.whitelistForm.value) {
+            queryParams["whitelist"] = this.whitelistForm.value;
+        } else {
+            delete queryParams["whitelist"];
+        }
+
+        if (this.blacklistForm.value) {
+            queryParams["blacklist"] = this.blacklistForm.value;
+        } else {
+            delete queryParams["blacklist"];
+        }
+
+        this.router.navigate(["/binance/live"], {
+            queryParams: queryParams,
+        });
+    }
+
     showDefaultColumns() {
         for (const col of this.columns) {
             this.config.visibleColumns[col.name] = col.display;
@@ -499,6 +552,19 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.route.queryParams.subscribe(params => {
+            this.previousQueryParams = params;
+
+            this.blacklistForm.setValue(params.blacklist);
+            this.config.blacklist = this.blacklistForm.value;
+
+            this.whitelistForm.setValue(params.whitelist);
+            this.config.whitelist = this.whitelistForm.value;
+
+            if (params.showFilters !== undefined) {
+                this.showMoreFilters = true;
+            }
+        });
         this.initHeaders();
         this.startUpdates();
         this.idleInterval = setInterval(() => {
@@ -611,7 +677,11 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         let activeSymbol: string = null;
         const activeRow = this.activeRow;
         if (activeRow != null) {
-            activeSymbol = this.tickers[this.activeRow].symbol;
+            try {
+                activeSymbol = this.tickers[this.activeRow].symbol;
+            } catch (e) {
+                activeSymbol = null;
+            }
         }
         let activeTicker: SymbolUpdate = null;
 
@@ -625,7 +695,18 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
         const min24Change = this.asNumber(this.config.min24Change);
         const maxRsi60 = this.asNumber(this.config.filters.maxRsi60);
 
+        const blacklist = new Blacklist(this.config.blacklist);
+        const whitelist = new Whitelist(this.config.whitelist);
+
         tickers = tickers.filter((ticker) => {
+
+            if (blacklist.match(ticker.symbol)) {
+                return false;
+            }
+
+            if (!whitelist.match(ticker.symbol)) {
+                return false;
+            }
 
             if (!this.filterBase(ticker)) {
                 return false;
@@ -715,6 +796,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
             for (const key of Object.keys(ticker)) {
                 new_ticker[key] = {
                     value: ticker[key],
+                    background_color: "",
                 };
 
                 if (this.config.sortBy == key) {
@@ -810,4 +892,47 @@ export class AppUpDownDirective {
         el.nativeElement.style.color = "green";
     }
 
+}
+
+class Blacklist {
+    private entries: string[];
+
+    constructor(private blacklistString = "") {
+        this.entries = blacklistString.split(/[\s,]/)
+            .filter((e) => {
+                return e.length > 0;
+            });
+    }
+
+    match(item: string): boolean {
+        for (const entry of this.entries) {
+            if (entry.toLowerCase() === item.toLowerCase()) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+class Whitelist {
+    private entries: string[];
+
+    constructor(private list = "") {
+        this.entries = list.split(/[\s,]/)
+            .filter((e) => {
+                return e.length > 0;
+            });
+    }
+
+    match(item: string): boolean {
+        if (this.entries.length == 0) {
+            return true;
+        }
+        for (const entry of this.entries) {
+            if (entry.toLowerCase() === item.toLowerCase()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

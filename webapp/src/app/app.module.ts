@@ -17,7 +17,7 @@ import {BrowserModule} from '@angular/platform-browser';
 import {Component, NgModule, OnInit} from '@angular/core';
 import {BinanceMonitorComponent,} from './monitor/monitor.component';
 import {ScannerApiService} from './scanner-api.service';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {RouterModule, Routes} from '@angular/router';
 import {RootComponent} from './root/root.component';
 import {AppThSortableComponent, AppUpDownDirective, BinanceLiveComponent,} from './live/live.component';
@@ -118,6 +118,7 @@ const appRoutes: Routes = [
         BrowserModule,
         BrowserAnimationsModule,
         FormsModule,
+        ReactiveFormsModule,
         HttpClientModule,
         RouterModule.forRoot(
             appRoutes, {useHash: false},
