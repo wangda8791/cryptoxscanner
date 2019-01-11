@@ -29,11 +29,12 @@ distclean: clean
 
 docker-build:
 	docker build -t cryptoxscanner-builder -f build/Dockerfile.build .
+	mkdir -p .docker_cache
 	docker run --rm -it \
 		-v `pwd`:/src \
-		-v `pwd`/.cache/node_modules:/src/webapp/node_modules \
-		-v `pwd`/.cache/go:/home/builder/go \
-		-u builder -w /src \
+		-v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
+		-v `pwd`/.docker_cache/go:/home/builder/go \
+		-w /src \
 		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 		cryptoxscanner-builder make install-deps build
 

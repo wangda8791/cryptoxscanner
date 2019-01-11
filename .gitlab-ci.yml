@@ -9,27 +9,20 @@ before_script:
         make \
         zip \
         gcc \
-        gcc-c++ \
-        mingw32-gcc \
-        mingw64-gcc
-
-  # Download and install Go.
-  - curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz | (cd /usr/local && tar zxf -)
-
-  # Use nvm to install the latest LTS node.
-  - curl --silent -o - https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
-  - export NVM_DIR="$HOME/.nvm"
-  - . ${NVM_DIR}/nvm.sh
-  - nvm install --lts
-  - nvm use --lts
+        mingw32-gcc
 
 build:
   script: |
+    export GO_VERSION=1.11.4
+    curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz | (cd /usr/local && tar zxf -)
+
+    export NODE_VERSION=10.15.0
+    (cd /usr/local && curl -o - -L https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz | tar zxf - --strip-components=1)
+    
     export PATH=/usr/local/go/bin:$PATH
     make install-deps
     CC=gcc GOOS=linux GOARCH=amd64 make dist
     CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 SKIP_WEBAPP=1 make dist
-    CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 SKIP_WEBAPP=1 make dist
 
     cp dist/*.zip ${CI_PROJECT_DIR}
 
