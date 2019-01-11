@@ -23,17 +23,17 @@ import (
 	"time"
 )
 
-type Stream24Ticker = binance.Stream24Ticker
+type StreamTicker24 = binance.StreamTicker24
 
 type TickerStream struct {
-	subscribers map[chan []binance.Stream24Ticker][][]binance.Stream24Ticker
+	subscribers map[chan []binance.StreamTicker24][][]binance.StreamTicker24
 	cache       *db.GenericCache
 	lock        sync.RWMutex
 }
 
 func NewTickerStream() *TickerStream {
 	tickerStream := &TickerStream{
-		subscribers: map[chan []binance.Stream24Ticker][][]binance.Stream24Ticker{},
+		subscribers: map[chan []binance.StreamTicker24][][]binance.StreamTicker24{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -45,21 +45,21 @@ func NewTickerStream() *TickerStream {
 	return tickerStream
 }
 
-func (b *TickerStream) Subscribe() chan []binance.Stream24Ticker {
+func (b *TickerStream) Subscribe() chan []binance.StreamTicker24 {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan []binance.Stream24Ticker)
-	b.subscribers[channel] = [][]binance.Stream24Ticker{}
+	channel := make(chan []binance.StreamTicker24)
+	b.subscribers[channel] = [][]binance.StreamTicker24{}
 	return channel
 }
 
-func (b *TickerStream) Unsubscribe(channel chan []binance.Stream24Ticker) {
+func (b *TickerStream) Unsubscribe(channel chan []binance.StreamTicker24) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	delete(b.subscribers, channel)
 }
 
-func (b *TickerStream) Publish(tickers []binance.Stream24Ticker) {
+func (b *TickerStream) Publish(tickers []binance.StreamTicker24) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	for channel, queue := range b.subscribers {
@@ -96,8 +96,8 @@ func (s *TickerStream) CacheAdd(body []byte) {
 	s.cache.AddItem(time.Now(), "ticker", body)
 }
 
-func (s *TickerStream) DecodeTickers(buf []byte) ([]binance.Stream24Ticker, error) {
-	message, err := binance.DecodeRawStreamMessage(buf)
+func (s *TickerStream) DecodeTickers(buf []byte) ([]binance.StreamTicker24, error) {
+	message, err := binance.DecodeStreamMessage(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,8 @@ func (s *TickerStream) DecodeTickers(buf []byte) ([]binance.Stream24Ticker, erro
 	return message.Tickers, nil
 }
 
-func (b *TickerStream) LoadCache() [][]binance.Stream24Ticker {
-	tickers := [][]binance.Stream24Ticker{}
+func (b *TickerStream) LoadCache() [][]binance.StreamTicker24 {
+	tickers := [][]binance.StreamTicker24{}
 
 	rows, err := b.cache.QueryAgeLessThan("ticker", 3600)
 	if err != nil {

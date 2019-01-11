@@ -31,7 +31,6 @@ type StreamClient struct {
 func NewStreamClient(name string, streams ...string) *StreamClient {
 	return &StreamClient{
 		name:    name,
-		client:  binance.NewStreamClient(),
 		streams: streams,
 	}
 }
@@ -80,8 +79,9 @@ func (s *StreamClient) Run(channel chan *binance.CombinedStreamMessage) {
 
 func (s *StreamClient) Connect() {
 	for {
-		err := s.client.Connect(s.streams...)
+		client, err := binance.OpenStreams(s.streams...)
 		if err == nil {
+			s.client = client
 			return
 		}
 		log.Printf("binance: failed to connect to stream [%s]: %v\n",

@@ -196,8 +196,8 @@ func (b *BinanceRunner) Run() {
 	}()
 }
 
-func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []binance.Stream24Ticker, recalculate bool) {
-	channel := make(chan binance.Stream24Ticker)
+func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []binance.StreamTicker24, recalculate bool) {
+	channel := make(chan binance.StreamTicker24)
 	wg := sync.WaitGroup{}
 
 	handler := func() {

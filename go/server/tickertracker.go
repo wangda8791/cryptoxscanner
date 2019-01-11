@@ -57,7 +57,7 @@ type TickerMetrics struct {
 
 type TickerTracker struct {
 	Symbol     string
-	Ticks      []*binance.Stream24Ticker
+	Ticks      []*binance.StreamTicker24
 	Metrics    map[int]*TickerMetrics
 	LastUpdate time.Time
 	H24Metrics TickerMetrics
@@ -99,7 +99,7 @@ func init() {
 func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
-		Ticks:   []*binance.Stream24Ticker{},
+		Ticks:   []*binance.StreamTicker24{},
 		Trades:  []*binance.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 		Aggs:    make(map[int][]Aggregate),
@@ -112,7 +112,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	return &tracker
 }
 
-func (t *TickerTracker) LastTick() *binance.Stream24Ticker {
+func (t *TickerTracker) LastTick() *binance.StreamTicker24 {
 	if len(t.Ticks) == 0 {
 		return nil
 	}
@@ -302,7 +302,7 @@ func (t *TickerTracker) CalculateTrades() {
 	t.Histogram.BuyVolume = volumeHistogram.BuyVolume[:]
 }
 
-func (t *TickerTracker) Update(ticker binance.Stream24Ticker) {
+func (t *TickerTracker) Update(ticker binance.StreamTicker24) {
 	t.LastUpdate = time.Now()
 	t.Ticks = append(t.Ticks, &ticker)
 	now := ticker.Timestamp()
@@ -474,7 +474,7 @@ func (t *TickerTrackerMap) GetTracker(symbol string) *TickerTracker {
 	return t.Trackers[symbol]
 }
 
-func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *binance.Stream24Ticker {
+func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *binance.StreamTicker24 {
 	if tracker, ok := t.Trackers[symbol]; ok {
 		return tracker.LastTick()
 	}

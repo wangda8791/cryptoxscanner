@@ -179,7 +179,7 @@ func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 }
 
 func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) {
-	streamEvent, err := binance.DecodeRawStreamMessage(body)
+	streamEvent, err := binance.DecodeStreamMessage(body)
 	if err != nil {
 		return nil, err
 	}
