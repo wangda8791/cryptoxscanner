@@ -17,8 +17,8 @@ Then connect your browser to http://localhost:6035.
 ## Building
 
 Before building _cryptoxscanner_ you must install Go and Node:
-- Node 10+
-- Go 1.11+
+- Node 10.15.0+
+- Go 1.11.4+
 As Cgo is used, you will also need a gcc/clang installed.
 
 Also, $GOAPTH/bin must be in your PATH.
@@ -40,7 +40,7 @@ Also, $GOAPTH/bin must be in your PATH.
 
 ## License
 
-This code is licensed under GNU Affero Public License, see
+This code is licensed under MIT License, see
 `LICENSE.txt` for more details. However, HighCharts is also used which
 falls under another license. Please make sure you comply with their
 license terms before deploying this scanner yourself.
