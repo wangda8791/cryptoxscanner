@@ -45,17 +45,10 @@ interface Trade {
 
 class DepthChart {
 
-    private askData = [];
-    private bidData = [];
-
     private element: HTMLCanvasElement = null;
-
     private ctx: CanvasRenderingContext2D = null;
-
     private chart: any = null;
-
     private labels: any[] = [];
-
     private bids: any[] = [];
     private asks: any[] = [];
 
@@ -124,56 +117,38 @@ class DepthChart {
 
     public update(asks: any[], bids: any[]) {
 
+        // If we're hidden, just return. Each update contains the whole order book
+        // to a certain depth, its not incremental.
         if (document.hidden) {
             return;
         }
 
-        this.askData = [];
-
-        let askTotal: number = 0;
-        for (let i = 0, n = asks.length; i < n; i++) {
-            const price: number = +asks[i][0];
-            const amount: number = +asks[i][1];
-            askTotal += amount;
-            this.askData.push([price, askTotal]);
-        }
-
-        this.askData = this.askData.sort((a, b) => {
-            return a[0] - b[0];
-        });
-
-        this.bidData = [];
-        for (let i = 0, n = bids.length; i < n; i++) {
-            const price: number = +bids[i][0];
-            const amount: number = +bids[i][1];
-            this.bidData.push([price, amount]);
-        }
-
-        this.bidData = this.bidData.sort((a, b) => {
-            return a[0] - b[0];
-        });
-
-        let bidTotal: number = 0;
-        for (let i = this.bidData.length - 1; i >= 0; i--) {
-            bidTotal += this.bidData[i][1];
-            this.bidData[i][1] = bidTotal;
-        }
-
+        // Reset.
         this.labels.length = 0;
         this.bids.length = 0;
         this.asks.length = 0;
-        for (let i = 0; i < this.bidData.length; i++) {
-            const bid = this.bidData[i];
-            this.bids.push(bid[1]);
+
+        bids.reverse();
+
+        let bidSum = 0;
+        for (let i = 0; i < bids.length; i++) {
+            const price: number = +bids[i][0];
+            const amount: number = +bids[i][1];
+            bidSum += amount;
             this.asks.push(0);
-            this.labels.push(bid[0]);
+            this.bids.unshift(bidSum);
+            this.labels.unshift(price);
         }
 
-        for (let i = 0; i < this.askData.length; i++) {
-            const ask = this.askData[i];
+        // Asks don't need reordering, process all at once.
+        let askSum: number = 0;
+        for (let i = 0, n = asks.length; i < n; i++) {
+            const price: number = +asks[i][0];
+            const amount: number = +asks[i][1];
+            askSum += amount;
             this.bids.push(0);
-            this.asks.push(ask[1]);
-            this.labels.push(ask[0]);
+            this.asks.push(askSum);
+            this.labels.push(price);
         }
 
         this.redraw();
@@ -654,7 +629,7 @@ class OrderBookTracker {
 
     private askMap = {};
 
-    private displayDepth = 50;
+    private displayDepth = 35;
 
     initialize(orderBook) {
         this.lastUpdateId = orderBook.lastUpdateId;
