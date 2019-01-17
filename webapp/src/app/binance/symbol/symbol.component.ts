@@ -29,12 +29,12 @@ import {ScannerApiService, SymbolUpdate} from '../../scanner-api.service';
 import {Subscription} from 'rxjs/Subscription';
 
 import {BinanceApiService, Kline, KlineInterval} from '../../binance-api.service';
+import {Chart} from "chart.js";
 
 import * as Mousetrap from "mousetrap";
 import * as $ from "jquery";
 
 declare var TradingView: any;
-declare var Highcharts: any;
 
 interface Trade {
     price: number;
@@ -43,157 +43,84 @@ interface Trade {
     buyerMaker: boolean;
 }
 
-class PriceChart {
-
-    public maxPoints: number = 60;
-
-    private elementId: string = null;
-
-    private chart: any = null;
-
-    private data: any = [];
-
-    constructor(elementId: string) {
-        this.elementId = elementId;
-        this.createChart();
-    }
-
-    createChart() {
-        this.chart = Highcharts.chart(this.elementId, {
-            title: {
-                text: null,
-            },
-            yAxis: {
-                labels: {
-                    enabled: true,
-                },
-                title: null,
-            },
-            series: [
-                {
-                    name: "Price",
-                    decimals: 8,
-                    data: [],
-                },
-            ],
-            rangeSelector: {
-                enabled: false,
-            },
-            navigator: {
-                enabled: false,
-            },
-            scrollbar: {
-                enabled: false,
-            },
-            xAxis: {
-                type: "datetime",
-            },
-            legend: {
-                enabled: false,
-            },
-            time: {
-                useUTC: false,
-            },
-            credits: {
-                enabled: false,
-            }
-        });
-    }
-
-    public update(priceUpdate: { timestamp: Date, price: number }) {
-        this.data.push([
-            priceUpdate.timestamp.getTime(),
-            priceUpdate.price,
-        ]);
-
-        const now = new Date().getTime();
-        while (this.data.length > 0) {
-            const age = now - this.data[0][0];
-            if (age > 60000) {
-                this.data.shift();
-            } else {
-                break;
-            }
-        }
-
-        const series = this.chart.series[0];
-
-        // Sometimes setData fails...
-        try {
-            series.setData(this.data.map((e) => {
-                return e;
-            }), false);
-            this.redraw();
-        } catch (err) {
-            console.log("price chart: error setting data; recreating");
-            console.log(err);
-            this.createChart();
-        }
-    }
-
-    public redraw() {
-        if (document.hidden) {
-            return;
-        }
-        this.chart.redraw();
-    }
-
-    public destroy() {
-        try {
-            this.chart.destroy();
-            this.chart = null;
-        } catch (err) {
-        }
-    }
-}
-
 class DepthChart {
-
-    private chart: any = null;
-
-    constructor(elementId: string) {
-        this.chart = Highcharts.chart(elementId, {
-            chart: {
-                type: "area",
-            },
-            title: {
-                text: null,
-            },
-            yAxis: {
-                labels: {
-                    enabled: false,
-                },
-                title: null,
-            },
-            xAxis: {
-                labels: {
-                    enabled: false,
-                },
-                title: null,
-            },
-            series: [
-                {
-                    name: "Asks",
-                    data: this.askData,
-                    color: "red",
-                },
-                {
-                    name: "Bids",
-                    data: this.bidData,
-                    color: "green",
-                }
-            ],
-            legend: {
-                enabled: false,
-            },
-            credits: {
-                enabled: false,
-            }
-        });
-    }
 
     private askData = [];
     private bidData = [];
+
+    private element: HTMLCanvasElement = null;
+
+    private ctx: CanvasRenderingContext2D = null;
+
+    private chart: any = null;
+
+    private labels: any[] = [];
+
+    private bids: any[] = [];
+    private asks: any[] = [];
+
+    constructor(elementId: string) {
+        this.element = <HTMLCanvasElement>document.getElementById(elementId);
+        this.ctx = this.element.getContext("2d");
+        this.chart = new Chart(this.ctx, {
+            type: 'line',
+            data: {
+                labels: this.labels,
+                datasets: [
+                    {
+                        data: this.bids,
+                        borderWidth: 1,
+                        backgroundColor: "green",
+                    },
+                    {
+                        data: this.asks,
+                        borderWidth: 1,
+                        backgroundColor: "red",
+                    }
+                ]
+            },
+            options: {
+                bezierCurve: false,
+                legend: {
+                    display: false,
+                },
+                tooltips: {
+                    enabled: false,
+                },
+                responsive: true,
+                elements: {
+                    point: {
+                        radius: 0,
+                    }
+                },
+                scales: {
+                    yAxes: [{
+                        gridLines: {
+                            drawBorder: false,
+                            display: false,
+                            tickMarkLength: 0,
+                        },
+                        ticks: {
+                            display: false,
+                            maxTicksLimit: 1,
+                        }
+                    }],
+                    xAxes: [{
+                        gridLines: {
+                            drawBorder: false,
+                            display: false,
+                            tickMarkLength: 0,
+                        },
+                        ticks: {
+                            //maxRotation: 0,
+                            display: false,
+                            maxTicksLimit: 1,
+                        }
+                    }]
+                },
+            }
+        });
+    }
 
     public update(asks: any[], bids: any[]) {
 
@@ -232,14 +159,103 @@ class DepthChart {
             this.bidData[i][1] = bidTotal;
         }
 
-        this.chart.series[0].setData(this.askData, false, false);
-        this.chart.series[1].setData(this.bidData, false, false);
+        this.labels.length = 0;
+        this.bids.length = 0;
+        this.asks.length = 0;
+        for (let i = 0; i < this.bidData.length; i++) {
+            const bid = this.bidData[i];
+            this.bids.push(bid[1]);
+            this.asks.push(0);
+            this.labels.push(bid[0]);
+        }
+
+        for (let i = 0; i < this.askData.length; i++) {
+            const ask = this.askData[i];
+            this.bids.push(0);
+            this.asks.push(ask[1]);
+            this.labels.push(ask[0]);
+        }
 
         this.redraw();
     }
 
     public redraw() {
-        this.chart.redraw(false);
+        this.chart.update();
+    }
+}
+
+class PriceTickerChart {
+
+    private labels: Date[] = [];
+    private data: number[] = [];
+    private element: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private chart: any;
+
+    constructor(elementId: string) {
+        this.element = <HTMLCanvasElement>document.getElementById(elementId);
+        this.ctx = this.element.getContext("2d");
+        this.chart = new Chart(this.ctx, {
+            type: 'bar',
+            data: {
+                labels: this.labels,
+                datasets: [{
+                    data: this.data,
+                    type: "line",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                legend: {
+                    display: false,
+                },
+                tooltips: {
+                    enabled: false,
+                },
+                responsive: true,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            maxTicksLimit: 2,
+                        },
+                    }],
+                    xAxes: [{
+                        type: "time",
+                        time: {
+                            unit: "second",
+                            displayFormats: {
+                                second: "h:mm:ss",
+                            }
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                        }
+                    }]
+                },
+            }
+        });
+    }
+
+    update(price: number, timestamp: Date) {
+        this.data.push(price);
+        this.labels.push(timestamp);
+        while (this.data.length > 60) {
+            this.data.shift();
+            this.labels.shift();
+        }
+        this.redraw();
+    }
+
+    redraw() {
+        if (!document.hidden) {
+            this.chart.update();
+        }
+    }
+
+    reset() {
+        this.labels.length = 0;
+        this.data.length = 0;
+        this.chart.update();
     }
 }
 
@@ -263,11 +279,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
 
     trades: Trade[] = [];
 
-    lastKline: Kline = null;
-
     lastPrice: number = null;
-
-    private priceChart: PriceChart = null;
 
     private depthChart: DepthChart = null;
 
@@ -281,19 +293,13 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
 
     tokenFxState: string = "connecting";
 
-    klineInterval: KlineInterval = KlineInterval.M1;
-
-    private klinesReady: boolean = false;
-
-    availableKlineIntervals: string[] = Object.keys(KlineInterval).map((key) => {
-        return KlineInterval[key];
-    });
-
     ATR: any = {};
 
     showTradingViewCharts: boolean = true;
 
     orderBook: OrderBookTracker = new OrderBookTracker();
+
+    priceChart: PriceTickerChart = null;
 
     constructor(private http: HttpClient,
                 private route: ActivatedRoute,
@@ -325,16 +331,16 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             this.binanceStream = null;
         }
 
-        if (this.priceChart) {
-            console.log("Destroying price chart.");
-            this.priceChart.destroy();
-            this.priceChart = null;
-        }
-
         if (this.tokenfxFeed) {
             console.log("Unsubscribing from TokenFX feed.");
             this.tokenfxFeed.unsubscribe();
         }
+
+        if (this.priceChart) {
+            this.priceChart.reset();
+        }
+
+        this.orderBook = new OrderBookTracker();
 
         this.ATR = {};
     }
@@ -351,6 +357,8 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
     }
 
     ngOnInit() {
+
+        this.priceChart = new PriceTickerChart("priceTickerChart");
 
         Mousetrap.bind("/", () => {
             this.toggleSymbolDropdown();
@@ -385,7 +393,9 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
     handleEvent(event: Event) {
         switch (event.type) {
             case "visibilitychange":
-                this.priceChart.redraw();
+                if (this.priceChart) {
+                    this.priceChart.redraw();
+                }
                 this.depthChart.redraw();
                 break;
             default:
@@ -416,9 +426,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
             .replace(/ETH$/, "");
         this.trades = [];
 
-        this.priceChart = new PriceChart("priceChart");
-
-        this.depthChart = new DepthChart("depthChart");
+        this.depthChart = new DepthChart("newDepthChart");
 
         this.start();
 
@@ -498,11 +506,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         return atrs.reverse();
     }
 
-    changeInterval(interval: KlineInterval) {
-        this.klinesReady = false;
-        this.klineInterval = interval;
-    }
-
     rawToTrade(raw): Trade {
         return {
             timestamp: new Date(raw.E),
@@ -543,10 +546,9 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
                 if (message.symbol) {
                     this.lastUpdate = message;
                     this.lastPrice = message.close;
-                    this.priceChart.update({
-                        timestamp: new Date(message.timestamp),
-                        price: message.close,
-                    });
+                    if (this.priceChart) {
+                        this.priceChart.update(message.close, new Date(message.timestamp));
+                    }
                 }
             }, (error) => {
                 // Error.
@@ -652,6 +654,8 @@ class OrderBookTracker {
 
     private askMap = {};
 
+    private displayDepth = 50;
+
     initialize(orderBook) {
         this.lastUpdateId = orderBook.lastUpdateId;
 
@@ -684,13 +688,13 @@ class OrderBookTracker {
             return (+b) - (+a);
         }).map((key) => {
             return [+key, +this.bidMap[key]];
-        }).slice(0, 30);
+        }).slice(0, this.displayDepth);
 
         this.asks = Object.keys(this.askMap).sort((a, b) => {
             return (+a) - (+b);
         }).map((key) => {
             return [+key, +this.askMap[key]];
-        }).slice(0, 30);
+        }).slice(0, this.displayDepth);
     }
 
     processUpdate(update: DepthUpdate) {
@@ -700,7 +704,7 @@ class OrderBookTracker {
             const p = +bid[0];
             const q = +bid[1];
             if (+q === 0) {
-                delete(this.bidMap[p]);
+                delete (this.bidMap[p]);
             } else {
                 this.bidMap[p] = q;
             }
@@ -710,7 +714,7 @@ class OrderBookTracker {
             const p = +ask[0];
             const q = +ask[1];
             if (+q === 0) {
-                delete(this.askMap[p]);
+                delete (this.askMap[p]);
             } else {
                 this.askMap[p] = q;
             }

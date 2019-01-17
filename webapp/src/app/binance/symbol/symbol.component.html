@@ -119,13 +119,13 @@
     </div>
   </nav>
 
-  <div class="row">
+  <div class="row mb-2" [ngStyle]="{'display': priceChart === null ? 'none' : null}">
     <div class="col-12 col-md-9">
       <div class="card">
         <div class="card-header">
           <b>Ticker (Range: 60 seconds)</b>
         </div>
-        <div id="priceChart" style="height: 100px; width: 99%;"></div>
+        <canvas class="mt-1" id="priceTickerChart" style="width: 100%; height: 100px !important;"></canvas>
       </div>
     </div>
     <div class="col-12 col-md-3 mt-2 mt-md-0">
@@ -133,12 +133,10 @@
         <div class="card-header">
           <b>Depth</b>
         </div>
-        <div id="depthChart" style="height: 100px; width: 99%;"></div>
+        <canvas class="mt-1" id="newDepthChart" style="width: 100%; height: 100px !important;"></canvas>
       </div>
     </div>
   </div>
-
-  <br/>
 
   <div class="row">
 
