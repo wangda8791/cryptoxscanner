@@ -31,19 +31,24 @@ import {Component, Input, OnChanges, OnInit} from '@angular/core';
 })
 export class OrderbookComponent implements OnInit, OnChanges {
 
-    @Input() bids: any[] = [];
-    @Input() asks: any[] = [];
+    private displayCount = 20;
+
+    @Input("bids") _bids: any[] = [];
+    @Input("asks") _asks: any[] = [];
 
     averageBidAmount: number = 0;
     averageAskAmount: number = 0;
 
-    constructor() {
-    }
+    bids: any[] = [];
+    asks: any[] = [];
 
     ngOnInit() {
     }
 
     ngOnChanges() {
+        this.bids = this._bids.slice(0, this.displayCount);
+        this.asks = this._asks.slice(0, this.displayCount);
+
         let totalBids = 0;
         for (let i = 0, n = this.bids.length - 1; i < n; i++) {
             totalBids += +this.bids[i][1];

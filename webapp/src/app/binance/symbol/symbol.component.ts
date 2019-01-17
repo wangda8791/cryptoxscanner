@@ -51,11 +51,13 @@ class DepthChart {
     private labels: any[] = [];
     private bids: any[] = [];
     private asks: any[] = [];
+    private options: any = {};
 
     constructor(elementId: string) {
         this.element = <HTMLCanvasElement>document.getElementById(elementId);
         this.ctx = this.element.getContext("2d");
-        this.chart = new Chart(this.ctx, {
+
+        this.options = {
             type: 'line',
             data: {
                 labels: this.labels,
@@ -64,16 +66,17 @@ class DepthChart {
                         data: this.bids,
                         borderWidth: 1,
                         backgroundColor: "green",
+                        lineTension: 0,
                     },
                     {
                         data: this.asks,
                         borderWidth: 1,
                         backgroundColor: "red",
+                        lineTension: 0,
                     }
                 ]
             },
             options: {
-                bezierCurve: false,
                 legend: {
                     display: false,
                 },
@@ -105,14 +108,15 @@ class DepthChart {
                             tickMarkLength: 0,
                         },
                         ticks: {
-                            //maxRotation: 0,
                             display: false,
                             maxTicksLimit: 1,
                         }
                     }]
                 },
             }
-        });
+        };
+
+        this.chart = new Chart(this.ctx, this.options);
     }
 
     public update(asks: any[], bids: any[]) {
@@ -123,19 +127,18 @@ class DepthChart {
             return;
         }
 
+
         // Reset.
         this.labels.length = 0;
         this.bids.length = 0;
         this.asks.length = 0;
-
-        bids.reverse();
 
         let bidSum = 0;
         for (let i = 0; i < bids.length; i++) {
             const price: number = +bids[i][0];
             const amount: number = +bids[i][1];
             bidSum += amount;
-            this.asks.push(0);
+            this.asks.unshift(0);
             this.bids.unshift(bidSum);
             this.labels.unshift(price);
         }
@@ -150,6 +153,10 @@ class DepthChart {
             this.asks.push(askSum);
             this.labels.push(price);
         }
+
+        let max = Math.max(bidSum, askSum);
+
+        this.options.options.scales.yAxes[0].ticks.max = max;
 
         this.redraw();
     }
@@ -629,7 +636,7 @@ class OrderBookTracker {
 
     private askMap = {};
 
-    private displayDepth = 35;
+    private displayDepth = 100;
 
     initialize(orderBook) {
         this.lastUpdateId = orderBook.lastUpdateId;
