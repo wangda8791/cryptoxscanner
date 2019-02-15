@@ -25,24 +25,23 @@
 package binance
 
 import (
-	"gitlab.com/crankykernel/cryptotrader/binance"
+	"encoding/json"
+	"github.com/crankykernel/binanceapi-go"
 	"gitlab.com/crankykernel/cryptoxscanner/db"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"sync"
 	"time"
 )
 
-type StreamTicker24 = binance.StreamTicker24
-
 type TickerStream struct {
-	subscribers map[chan []binance.StreamTicker24][][]binance.StreamTicker24
+	subscribers map[chan []binanceapi.TickerStreamMessage][][]binanceapi.TickerStreamMessage
 	cache       *db.GenericCache
 	lock        sync.RWMutex
 }
 
 func NewTickerStream() *TickerStream {
 	tickerStream := &TickerStream{
-		subscribers: map[chan []binance.StreamTicker24][][]binance.StreamTicker24{},
+		subscribers: map[chan []binanceapi.TickerStreamMessage][][]binanceapi.TickerStreamMessage{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -54,21 +53,21 @@ func NewTickerStream() *TickerStream {
 	return tickerStream
 }
 
-func (b *TickerStream) Subscribe() chan []binance.StreamTicker24 {
+func (b *TickerStream) Subscribe() chan []binanceapi.TickerStreamMessage {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan []binance.StreamTicker24)
-	b.subscribers[channel] = [][]binance.StreamTicker24{}
+	channel := make(chan []binanceapi.TickerStreamMessage)
+	b.subscribers[channel] = [][]binanceapi.TickerStreamMessage{}
 	return channel
 }
 
-func (b *TickerStream) Unsubscribe(channel chan []binance.StreamTicker24) {
+func (b *TickerStream) Unsubscribe(channel chan []binanceapi.TickerStreamMessage) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	delete(b.subscribers, channel)
 }
 
-func (b *TickerStream) Publish(tickers []binance.StreamTicker24) {
+func (b *TickerStream) Publish(tickers []binanceapi.TickerStreamMessage) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	for channel, queue := range b.subscribers {
@@ -92,30 +91,49 @@ func (b *TickerStream) Publish(tickers []binance.StreamTicker24) {
 }
 
 func (s *TickerStream) Run() {
-	inChannel := make(chan *binance.CombinedStreamMessage)
-	go NewStreamClient("binance.ticker", "!ticker@arr").Run(inChannel)
-	for {
-		streamMessage := <-inChannel
-		s.CacheAdd(streamMessage.Bytes)
-		s.Publish(streamMessage.Tickers)
-	}
+	go func() {
+	Reconnect:
+		allTickerStream, err := binanceapi.OpenAllMarketTickerStream()
+		if err != nil {
+			log.Errorf("Failed to open all market ticker stream: %v", err)
+			time.Sleep(1 * time.Second)
+			goto Reconnect
+		}
+		for {
+			body, err := allTickerStream.Next()
+			if err != nil {
+				log.Errorf("Failed to read next message from ticker stream: %v", err)
+				goto Reconnect
+			}
+			var tickers []binanceapi.TickerStreamMessage
+			if err := json.Unmarshal(body, &tickers); err != nil {
+				log.Errorf("Failed to decode ticker stream: %v", err)
+			} else {
+				s.CacheAdd(body)
+				s.Publish(tickers)
+			}
+		}
+	}()
 }
 
 func (s *TickerStream) CacheAdd(body []byte) {
 	s.cache.AddItem(time.Now(), "ticker", body)
 }
 
-func (s *TickerStream) DecodeTickers(buf []byte) ([]binance.StreamTicker24, error) {
-	message, err := binance.DecodeStreamMessage(buf)
+func (s *TickerStream) DecodeTickers(buf []byte) ([]binanceapi.TickerStreamMessage, error) {
+	message, err := binanceapi.DecodeAllMarketTickerStream(buf)
 	if err != nil {
-		return nil, err
+		message, err := binanceapi.DecodeCombinedStreamMessage(buf)
+		if err != nil {
+			return nil, err
+		}
+		return message.Tickers, nil
 	}
-
-	return message.Tickers, nil
+	return message, nil
 }
 
-func (b *TickerStream) LoadCache() [][]binance.StreamTicker24 {
-	tickers := [][]binance.StreamTicker24{}
+func (b *TickerStream) LoadCache() [][]binanceapi.TickerStreamMessage {
+	tickers := [][]binanceapi.TickerStreamMessage{}
 
 	rows, err := b.cache.QueryAgeLessThan("ticker", 3600)
 	if err != nil {

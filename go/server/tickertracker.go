@@ -26,7 +26,6 @@ package server
 
 import (
 	"github.com/crankykernel/binanceapi-go"
-	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/metrics"
 	"math"
@@ -67,7 +66,7 @@ type TickerMetrics struct {
 
 type TickerTracker struct {
 	Symbol     string
-	Ticks      []*binance.StreamTicker24
+	Ticks      []*binanceapi.TickerStreamMessage
 	Metrics    map[int]*TickerMetrics
 	LastUpdate time.Time
 	H24Metrics TickerMetrics
@@ -109,7 +108,7 @@ func init() {
 func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
-		Ticks:   []*binance.StreamTicker24{},
+		Ticks:   []*binanceapi.TickerStreamMessage{},
 		Trades:  []*binanceapi.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 		Aggs:    make(map[int][]Aggregate),
@@ -122,7 +121,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	return &tracker
 }
 
-func (t *TickerTracker) LastTick() *binance.StreamTicker24 {
+func (t *TickerTracker) LastTick() *binanceapi.TickerStreamMessage {
 	if len(t.Ticks) == 0 {
 		return nil
 	}
@@ -312,7 +311,7 @@ func (t *TickerTracker) CalculateTrades() {
 	t.Histogram.BuyVolume = volumeHistogram.BuyVolume[:]
 }
 
-func (t *TickerTracker) Update(ticker binance.StreamTicker24) {
+func (t *TickerTracker) Update(ticker binanceapi.TickerStreamMessage) {
 	t.LastUpdate = time.Now()
 	t.Ticks = append(t.Ticks, &ticker)
 	now := ticker.Timestamp()
@@ -484,7 +483,7 @@ func (t *TickerTrackerMap) GetTracker(symbol string) *TickerTracker {
 	return t.Trackers[symbol]
 }
 
-func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *binance.StreamTicker24 {
+func (t *TickerTrackerMap) GetLastForSymbol(symbol string) *binanceapi.TickerStreamMessage {
 	if tracker, ok := t.Trackers[symbol]; ok {
 		return tracker.LastTick()
 	}

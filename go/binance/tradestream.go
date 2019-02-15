@@ -25,9 +25,7 @@
 package binance
 
 import (
-	"fmt"
 	"github.com/crankykernel/binanceapi-go"
-	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/db"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"strings"
@@ -144,7 +142,6 @@ func (b *TradeStream) Run() {
 				}
 			}
 
-
 			log.Printf("binance: connecting to trade stream.")
 			tradeStream := connect()
 
@@ -208,7 +205,7 @@ func (b *TradeStream) Publish(trade *binanceapi.StreamAggTrade) {
 }
 
 func (b *TradeStream) DecodeTrade(body []byte) (*binanceapi.StreamAggTrade, error) {
-	streamEvent, err := binanceapi.DecodeStreamMessage(body)
+	streamEvent, err := binanceapi.DecodeCombinedStreamMessage(body)
 	if err != nil {
 		return nil, err
 	}
@@ -216,14 +213,13 @@ func (b *TradeStream) DecodeTrade(body []byte) (*binanceapi.StreamAggTrade, erro
 }
 
 func (b *TradeStream) GetSymbols() ([]string, error) {
-	symbols, err := binance.NewAnonymousClient().GetAllSymbols()
+	prices, err := (&binanceapi.RestClient{}).GetPriceTickerAll()
 	if err != nil {
-		return nil, nil
+		log.Errorf("Failed to get all prices for symbol list: %v", err)
 	}
-	streams := []string{}
-	for _, symbol := range symbols {
-		streams = append(streams, fmt.Sprintf("%s", strings.ToLower(symbol)))
+	symbols := []string{}
+	for _, price := range prices {
+		symbols = append(symbols, strings.ToLower(price.Symbol))
 	}
-
-	return streams, nil
+	return symbols, nil
 }
