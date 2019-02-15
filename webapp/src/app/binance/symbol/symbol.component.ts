@@ -184,7 +184,8 @@ class PriceTickerChart {
                 datasets: [{
                     data: this.data,
                     type: "line",
-                    borderWidth: 1
+                    borderWidth: 1,
+                    backgroundColor: "darkcyan",
                 }]
             },
             options: {
@@ -339,7 +340,6 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
     }
 
     ngOnInit() {
-
         this.priceChart = new PriceTickerChart("priceTickerChart");
 
         Mousetrap.bind("/", () => {

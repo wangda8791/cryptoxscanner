@@ -39,8 +39,6 @@ function loadTheme() {
     const requireStyles = () => {
         const themeName = localStorage.getItem("theme");
         switch (themeName) {
-            case "dark":
-                return require("./styles/theme-dark.scss");
             default:
                 return require("./styles/theme-default.scss");
         }
