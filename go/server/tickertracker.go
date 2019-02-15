@@ -25,6 +25,7 @@
 package server
 
 import (
+	"github.com/crankykernel/binanceapi-go"
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/metrics"
@@ -72,7 +73,7 @@ type TickerTracker struct {
 	H24Metrics TickerMetrics
 
 	// Trades, in Binance format.
-	Trades []*binance.StreamAggTrade
+	Trades []*binanceapi.StreamAggTrade
 
 	Aggs map[int][]Aggregate
 
@@ -109,7 +110,7 @@ func NewTickerTracker(symbol string) *TickerTracker {
 	tracker := TickerTracker{
 		Symbol:  symbol,
 		Ticks:   []*binance.StreamTicker24{},
-		Trades:  []*binance.StreamAggTrade{},
+		Trades:  []*binanceapi.StreamAggTrade{},
 		Metrics: make(map[int]*TickerMetrics),
 		Aggs:    make(map[int][]Aggregate),
 	}
@@ -325,7 +326,7 @@ func (t *TickerTracker) Update(ticker binance.StreamTicker24) {
 	}
 }
 
-func (t *TickerTracker) AddTrade(trade binance.StreamAggTrade) {
+func (t *TickerTracker) AddTrade(trade binanceapi.StreamAggTrade) {
 	if trade.Symbol == "" {
 		log.Printf("error: not adding trade with empty symbol")
 		return

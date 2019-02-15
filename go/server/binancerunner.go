@@ -26,6 +26,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/crankykernel/binanceapi-go"
 	"gitlab.com/crankykernel/cryptoxscanner/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"math"
@@ -84,7 +85,7 @@ func (b *BinanceRunner) Run() {
 	wg.Add(1)
 	go func() {
 		count := 0
-		binanceTradeStream.RestoreCache(func(trade *binance.StreamAggTrade) {
+		binanceTradeStream.RestoreCache(func(trade *binanceapi.StreamAggTrade) {
 			ticker := b.trackers.GetTracker(trade.Symbol)
 			ticker.AddTrade(*trade)
 			count += 1

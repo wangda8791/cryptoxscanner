@@ -26,6 +26,7 @@ package binance
 
 import (
 	"fmt"
+	"github.com/crankykernel/binanceapi-go"
 	"gitlab.com/crankykernel/cryptotrader/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/db"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
@@ -34,19 +35,19 @@ import (
 	"time"
 )
 
-type StreamAggTrade = binance.StreamAggTrade
+type StreamAggTrade = binanceapi.StreamAggTrade
 
-type tradeStreamSubscriberQueue []binance.StreamAggTrade
+type tradeStreamSubscriberQueue []binanceapi.StreamAggTrade
 
 type TradeStream struct {
-	subscribers map[chan binance.StreamAggTrade]tradeStreamSubscriberQueue
+	subscribers map[chan binanceapi.StreamAggTrade]tradeStreamSubscriberQueue
 	lock        sync.RWMutex
 	cache       *db.GenericCache
 }
 
 func NewTradeStream() *TradeStream {
 	tradeStream := &TradeStream{
-		subscribers: map[chan binance.StreamAggTrade]tradeStreamSubscriberQueue{},
+		subscribers: map[chan binanceapi.StreamAggTrade]tradeStreamSubscriberQueue{},
 	}
 	cache, err := db.OpenGenericCache("binance-cache")
 	if err != nil {
@@ -58,21 +59,21 @@ func NewTradeStream() *TradeStream {
 	return tradeStream
 }
 
-func (b *TradeStream) Subscribe() chan binance.StreamAggTrade {
+func (b *TradeStream) Subscribe() chan binanceapi.StreamAggTrade {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	channel := make(chan binance.StreamAggTrade, 1024)
+	channel := make(chan binanceapi.StreamAggTrade, 1024)
 	b.subscribers[channel] = tradeStreamSubscriberQueue{}
 	return channel
 }
 
-func (b *TradeStream) Unsubscribe(channel chan binance.StreamAggTrade) {
+func (b *TradeStream) Unsubscribe(channel chan binanceapi.StreamAggTrade) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 	delete(b.subscribers, channel)
 }
 
-func (b *TradeStream) RestoreCache(cb func(*binance.StreamAggTrade)) {
+func (b *TradeStream) RestoreCache(cb func(*binanceapi.StreamAggTrade)) {
 	rows, err := b.cache.QueryAgeLessThan("trade", 3600*2)
 	if err != nil {
 		log.WithError(err).Error("Failed to restore trades from database.")
@@ -101,37 +102,56 @@ func (b *TradeStream) RestoreCache(cb func(*binance.StreamAggTrade)) {
 }
 
 func (b *TradeStream) Run() {
-	tradeChannel := make(chan *binance.StreamAggTrade)
+	tradeChannel := make(chan *binanceapi.StreamAggTrade)
 
 	go func() {
 		for {
-			// Get the streams to subscribe to.
-			var streams []string
+			// Get the symbols to subscribe to.
+			var symbols []string
 			for {
 				var err error
-				streams, err = b.GetStreams()
+				symbols, err = b.GetSymbols()
 				if err != nil {
 					log.Printf("binance: failed to get streams: %v", err)
-					goto TryAgain
+					goto SymbolsTryAgain
 				}
-				if len(streams) == 0 {
+				if len(symbols) == 0 {
 					log.Printf("binance: got 0 streams, trying again")
-					goto TryAgain
+					goto SymbolsTryAgain
 				}
-				log.Printf("binance: got %d streams\n", len(streams))
+				log.Printf("binance: got %d streams\n", len(symbols))
 				break
-			TryAgain:
+			SymbolsTryAgain:
 				time.Sleep(1 * time.Second)
 			}
 
-			tradeStream := NewStreamClient("aggTrades", streams...)
+			combinedStreamBuilder := binanceapi.NewCombinedStreamBuilder()
+			for _, symbol := range symbols {
+				combinedStreamBuilder.SubscribeAggTrade(symbol)
+			}
+
+			// Connect.
+			connect := func() *binanceapi.Stream {
+				for {
+					stream, err := combinedStreamBuilder.Connect()
+					if err != nil {
+						log.Errorf("Failed to connect to Binance trade streams: %v", err)
+						time.Sleep(time.Second * 1)
+						continue
+					} else {
+						return stream
+					}
+				}
+			}
+
+
 			log.Printf("binance: connecting to trade stream.")
-			tradeStream.Connect()
+			tradeStream := connect()
 
 			// Read loop.
 		ReadLoop:
 			for {
-				body, err := tradeStream.ReadNext()
+				body, err := tradeStream.Next()
 				if err != nil {
 					log.Printf("binance: trade feed read error: %v\n", err)
 					break ReadLoop
@@ -161,7 +181,7 @@ func (b *TradeStream) Run() {
 	log.Printf("binance: trade feed exiting.\n")
 }
 
-func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
+func (b *TradeStream) Publish(trade *binanceapi.StreamAggTrade) {
 	b.lock.RLock()
 	defer b.lock.RUnlock()
 	for channel, queue := range b.subscribers {
@@ -187,23 +207,22 @@ func (b *TradeStream) Publish(trade *binance.StreamAggTrade) {
 	}
 }
 
-func (b *TradeStream) DecodeTrade(body []byte) (*binance.StreamAggTrade, error) {
-	streamEvent, err := binance.DecodeStreamMessage(body)
+func (b *TradeStream) DecodeTrade(body []byte) (*binanceapi.StreamAggTrade, error) {
+	streamEvent, err := binanceapi.DecodeStreamMessage(body)
 	if err != nil {
 		return nil, err
 	}
 	return streamEvent.AggTrade, nil
 }
 
-func (b *TradeStream) GetStreams() ([]string, error) {
+func (b *TradeStream) GetSymbols() ([]string, error) {
 	symbols, err := binance.NewAnonymousClient().GetAllSymbols()
 	if err != nil {
 		return nil, nil
 	}
 	streams := []string{}
 	for _, symbol := range symbols {
-		streams = append(streams,
-			fmt.Sprintf("%s@aggTrade", strings.ToLower(symbol)))
+		streams = append(streams, fmt.Sprintf("%s", strings.ToLower(symbol)))
 	}
 
 	return streams, nil
