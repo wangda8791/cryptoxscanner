@@ -60,7 +60,7 @@ type TickerMetrics struct {
 	TotalVolume float64
 	NetVolume   float64
 	BuyVolume   float64
-	SellVolume   float64
+	SellVolume  float64
 	RSI         float64
 }
 
@@ -87,6 +87,7 @@ type TickerTracker struct {
 		Volume         []float64
 		SellVolume     []float64
 		BuyVolume      []float64
+		NetVolume      []float64
 	}
 }
 
@@ -309,6 +310,7 @@ func (t *TickerTracker) CalculateTrades() {
 	t.Histogram.Volume = volumeHistogram.Volume[:]
 	t.Histogram.SellVolume = volumeHistogram.SellVolume[:]
 	t.Histogram.BuyVolume = volumeHistogram.BuyVolume[:]
+	t.Histogram.NetVolume = volumeHistogram.NetVolume[:]
 }
 
 func (t *TickerTracker) Update(ticker binanceapi.TickerStreamMessage) {

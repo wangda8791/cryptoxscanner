@@ -1,0 +1,52 @@
+<div class="container-fluid mt-2">
+
+  <div class="row">
+    <div class="col-md-12 col-lg-4">
+      <div class="alert alert-warning">
+        <b>Experimental - This is a quick hack based on the streaming data I already generate.</b>
+        <ul>
+          <li>
+            A ping is where any 1 minute net volume interval is greater than the net volume for the minute before it.
+          </li>
+          <li>
+            This uses a rolling window for the past hour, it does not reset on the hour.
+          </li>
+          <li>
+            The list is sorted by max ping value.
+          </li>
+          <li>
+            I'll add some filters, in time.
+          </li>
+          <li>
+            BTC only.
+          </li>
+          <li>
+            The table updates every 6 seconds, <b>no need to refresh</b>.
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <tr>
+            <th>Symbol</th>
+            <th>Pings</th>
+            <th>24h Volume</th>
+            <th>1h Volume</th>
+            <th>1h Net Volume</th>
+          </tr>
+          <tr *ngFor="let row of tickers">
+            <td>{{row.symbol}}</td>
+            <td>{{row.pings}}</td>
+            <td>{{row.volume}}</td>
+            <td>{{row.v60}}</td>
+            <td>{{row.nv60}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+</div>

@@ -36,10 +36,13 @@ import (
 )
 
 type BinanceRunner struct {
-	trackers     *TickerTrackerMap
-	websocket    *TickerWebSocketHandler
-	subscribers  map[string]map[chan interface{}]bool
+	trackers    *TickerTrackerMap
+	websocket   *TickerWebSocketHandler
+	subscribers map[string]map[chan interface{}]bool
 	tickerStream *binance.TickerStream
+
+	Cached    TickerTrackerMap
+	CacheLock sync.RWMutex
 }
 
 func NewBinanceRunner() *BinanceRunner {
@@ -172,9 +175,6 @@ func (b *BinanceRunner) Run() {
 						}
 					}
 
-					update["tvh"] = tracker.Histogram.Volume
-					update["bvh"] = tracker.Histogram.BuyVolume
-
 					for i, k := range tracker.Metrics {
 						if !math.IsNaN(k.RSI) {
 							update[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
@@ -195,6 +195,10 @@ func (b *BinanceRunner) Run() {
 					log.Printf("error: broadcasting message: %v", err)
 				}
 
+				b.CacheLock.Lock()
+				b.Cached = *b.trackers
+				b.CacheLock.Unlock()
+
 				now := time.Now()
 				lastUpdate = now
 				processingTime := now.Sub(loopStartTime) - waitTime
@@ -207,6 +211,12 @@ func (b *BinanceRunner) Run() {
 			}
 		}
 	}()
+}
+
+func (b *BinanceRunner) GetCache() TickerTrackerMap {
+	b.CacheLock.RLock()
+	defer b.CacheLock.RUnlock()
+	return b.Cached
 }
 
 func (b *BinanceRunner) updateTrackers(trackers *TickerTrackerMap, tickers []binanceapi.TickerStreamMessage, recalculate bool) {

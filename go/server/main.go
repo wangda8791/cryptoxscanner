@@ -76,6 +76,8 @@ func ServerMain(options Options) {
 	router.HandleFunc("/api/1/ping", pingHandler)
 	router.HandleFunc("/api/1/status/websockets", webSocketsStatusHandler)
 
+	router.Handle("/api/1/binance/volume", NewVolumeHandler(binanceFeed))
+
 	static := packr.NewBox("../../webapp/dist")
 	staticServer := http.FileServer(static)
 
@@ -94,6 +96,36 @@ func ServerMain(options Options) {
 	}()
 	log.Printf("Starting server on port %d.", options.Port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", options.Port), router))
+}
+
+type VolumeHandler struct {
+	binanceRunner *BinanceRunner
+}
+
+func NewVolumeHandler(binanceRunner *BinanceRunner) *VolumeHandler {
+	return &VolumeHandler{
+		binanceRunner: binanceRunner,
+	}
+}
+
+func (h *VolumeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	lastTracker := h.binanceRunner.GetCache()
+	data := map[string]interface{}{}
+	for symbol := range lastTracker.Trackers {
+		tracker := lastTracker.Trackers[symbol]
+		ticker := map[string]interface{}{}
+		ticker["nvh"] = lastTracker.Trackers[symbol].Histogram.NetVolume
+		ticker["vol"] = tracker.LastTick().TotalQuoteVolume
+		ticker["priceChange1h"] = tracker.Metrics[60].PriceChangePercent
+		ticker["nv60"] = tracker.Metrics[60].NetVolume
+		ticker["v60"] = tracker.Metrics[60].TotalVolume
+		data[symbol] = ticker
+	}
+	response := map[string]interface{}{
+		"data": data,
+	}
+	encoder := json.NewEncoder(w)
+	encoder.Encode(response)
 }
 
 func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {

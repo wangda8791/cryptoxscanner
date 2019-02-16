@@ -44,6 +44,8 @@ type VolumeHistogramCalculator struct {
 	SellVolume [Buckets]float64
 	// Buy volume in quote currency.
 	BuyVolume [Buckets]float64
+	// Net volume in quote currency.
+	NetVolume [Buckets]float64
 }
 
 func NewVolumeHistogramCalculator() VolumeHistogramCalculator {
@@ -65,5 +67,7 @@ func (v *VolumeHistogramCalculator) AddTrade(trade *binance.StreamAggTrade) {
 			v.BuyVolume[bucket] += trade.QuoteQuantity()
 			v.BuyTradeCount[bucket] += 1
 		}
+
+		v.NetVolume[bucket] = v.BuyVolume[bucket] - v.SellVolume[bucket]
 	}
 }
