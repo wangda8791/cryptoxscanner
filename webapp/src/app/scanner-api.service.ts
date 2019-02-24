@@ -99,8 +99,11 @@ export class ScannerApiService {
                 });
     }
 
-    public connectBinanceMonitor(): Observable<SymbolUpdate[] | SymbolUpdate> {
-        const url = `${this.baseUrl}/ws/binance/monitor`;
+    public connectBinanceMonitor(options: any = {}): Observable<SymbolUpdate[] | SymbolUpdate> {
+        let url = `${this.baseUrl}/ws/binance/monitor?`;
+        if (options.updateInterval) {
+            url = `${url}updateInterval=${options.updateInterval}&`;
+        }
         return this.connect(url);
     }
 

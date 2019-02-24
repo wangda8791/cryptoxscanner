@@ -38,17 +38,34 @@
             Configure Alerts
           </button>
         </li>
+
       </ul>
 
       <ul class="navbar-nav">
+
+        <li class="nav-item">
+          <div class="input-group input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Update Interval</span>
+            </div>
+            <select class="form-control" name="updateInterval"
+                    [(ngModel)]="updateInterval" (change)="changeUpdateInterval();">
+              <option value="1">1s</option>
+              <option value="60">1m</option>
+              <option value="180">3m</option>
+              <option value="300">5m</option>
+            </select>
+          </div>
+        </li>
+
         <li class="nav-item">
           <span class="nav-link">Pairs: {{pairCount}}</span>
         </li>
 
         <li class="nav-item">
           <span class="nav-link">
-            Last update:<span [ngStyle]="{'color': bullsEyeColor}">
-            {{idleTime | number:"1.0-0"}} seconds ago.</span>
+            <!--Last update:<span [ngStyle]="{'color': bullsEyeColor}">-->
+            Last update: {{idleTime | number:"1.0-0"}} seconds ago.
           </span>
         </li>
 
@@ -501,14 +518,14 @@
               <td>
                 <span class="float-right">
                   <a
-                     class="btn btn-outline-secondary btn-sm"
-                     href="https://www.binance.com/tradeDetail.html?symbol={{alert.ticker.symbol | exchangesymbol:'binance'}}"
-                     target="_blank" alt="Binance" title="Binance">B</a>
+                      class="btn btn-outline-secondary btn-sm"
+                      href="https://www.binance.com/tradeDetail.html?symbol={{alert.ticker.symbol | exchangesymbol:'binance'}}"
+                      target="_blank" alt="Binance" title="Binance">B</a>
 
                   <a
-                     href="https://www.tradingview.com/chart?symbol=BINANCE:{{alert.ticker.symbol}}"
-                     class="btn btn-outline-secondary btn-sm" target="_blank"
-                     alert="Trading View" title="Trading View">TV</a>
+                      href="https://www.tradingview.com/chart?symbol=BINANCE:{{alert.ticker.symbol}}"
+                      class="btn btn-outline-secondary btn-sm" target="_blank"
+                      alert="Trading View" title="Trading View">TV</a>
 
                   <a href="https://cryptopanic.com/news/{{alert.ticker.symbol | baseasset}}/"
                      class="btn btn-outline-secondary btn-sm"

@@ -29,8 +29,10 @@ import (
 	"github.com/gorilla/websocket"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var wsConnectionTracker *WsConnectionTracker
@@ -178,6 +180,11 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	defer wsConnectionTracker.Del(r.URL.String(), client)
 
 	symbol := r.FormValue("symbol")
+	updateInterval, err := strconv.ParseInt(r.FormValue("updateInterval"), 10, 64)
+	if err != nil {
+		updateInterval = 0
+	}
+	lastUpdate := time.Time{}
 
 	// The read loop just reads and discards message until an error is
 	// received.
@@ -218,10 +225,16 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 			if msg == nil {
 				goto Done
 			}
+
+			if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
+				continue
+			}
+
 			if err := client.conn.WritePreparedMessage(msg); err != nil {
 				log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
 				goto Done
 			}
+			lastUpdate = time.Now()
 		}
 	}
 Done:

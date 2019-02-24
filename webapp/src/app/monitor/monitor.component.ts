@@ -98,6 +98,8 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
 
     private tickerMap: { [key: string]: SymbolUpdate } = {};
 
+    updateInterval = 1;
+
     banner = {
         show: true,
         className: "alert-info",
@@ -388,7 +390,9 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     protected connect() {
-        return this.tokenFxApi.connectBinanceMonitor();
+        return this.tokenFxApi.connectBinanceMonitor({
+            updateInterval: +this.updateInterval,
+        });
     }
 
     private startStream() {
@@ -416,6 +420,11 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                                 this.startStream();
                             }, 1000);
                         });
+    }
+
+    changeUpdateInterval() {
+        this.stream.unsubscribe();
+        this.startStream();
     }
 
     private update(update: any) {
