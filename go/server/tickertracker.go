@@ -62,6 +62,9 @@ type TickerMetrics struct {
 	BuyVolume   float64
 	SellVolume  float64
 	RSI         float64
+	TotalTrades uint64
+	SellTrades  uint64
+	BuyTrades   uint64
 }
 
 type TickerTracker struct {
@@ -88,6 +91,7 @@ type TickerTracker struct {
 		SellVolume     []float64
 		BuyVolume      []float64
 		NetVolume      []float64
+		Volume24       []float64
 	}
 }
 
@@ -245,6 +249,25 @@ func (t *TickerTracker) CalculateTicks() {
 	t.H24Metrics.Low = last.LowPrice
 	t.H24Metrics.Range = Round8(last.HighPrice - last.LowPrice)
 	t.H24Metrics.RangePercent = Round3(t.H24Metrics.Range / last.LowPrice * 100)
+
+	volume24h := []float64{}
+	for i := len(t.Ticks) - 1; i >= 0; i-- {
+		age := int(now.Sub(t.Ticks[i].Timestamp()).Truncate(time.Minute).Minutes())
+		if age > 59 {
+			break
+		}
+		for {
+			if age > len(volume24h) {
+				volume24h = append(volume24h, 0)
+			} else {
+				break
+			}
+		}
+		if age == len(volume24h) {
+			volume24h = append(volume24h, t.Ticks[i].TotalQuoteVolume)
+		}
+	}
+	t.Histogram.Volume24 = volume24h
 }
 
 // Calculate values that depend on actual trades:
@@ -269,17 +292,23 @@ func (t *TickerTracker) CalculateTrades() {
 	vwapVolume := float64(0)
 	buyVolume := float64(0)
 	sellVolume := float64(0)
+	totalTrades := uint64(0)
+	sellTrades := uint64(0)
+	buyTrades := uint64(0)
 
 	for i := count - 1; i >= 0; i-- {
 		trade := t.Trades[i]
 
 		age := now.Sub(trade.Timestamp())
 
-		if !trade.BuyerMaker {
-			buyVolume += trade.QuoteQuantity()
-		} else {
+		if trade.BuyerMaker {
 			sellVolume += trade.QuoteQuantity()
+			sellTrades += 1
+		} else {
+			buyVolume += trade.QuoteQuantity()
+			buyTrades += 1
 		}
+		totalTrades += 1
 
 		vwapVolume += trade.Quantity
 		vwapPrice += trade.Quantity * trade.Price
@@ -302,6 +331,9 @@ func (t *TickerTracker) CalculateTrades() {
 		metrics.BuyVolume = buyVolume
 		metrics.SellVolume = sellVolume
 		metrics.Vwap = vwap
+		metrics.TotalTrades = totalTrades
+		metrics.BuyTrades = buyTrades
+		metrics.SellTrades = sellTrades
 	}
 
 	t.Histogram.TradeCount = volumeHistogram.TradeCount[:]

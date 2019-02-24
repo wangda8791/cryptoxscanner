@@ -1,5 +1,5 @@
 export const environment = {
     production: false,
-    buildNumber: 27,
-    protoVersion: 27,
+    buildNumber: 29,
+    protoVersion: 29,
 };

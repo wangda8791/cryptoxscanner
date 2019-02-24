@@ -315,7 +315,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         }
 
         if (this.tokenfxFeed) {
-            console.log("Unsubscribing from TokenFX feed.");
+            console.log("Unsubscribing from Scanner feed.");
             this.tokenfxFeed.unsubscribe();
         }
 
@@ -563,7 +563,7 @@ export class BinanceSymbolComponent implements OnInit, OnDestroy, AfterViewInit 
         ];
 
         const url = `wss://stream.binance.com:9443/stream?streams=` +
-            streams.join("/") + "/";
+            streams.join("/"); //+ "/";
 
         const ws = new WebSocket(url);
 

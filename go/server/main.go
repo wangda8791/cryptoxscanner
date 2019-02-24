@@ -115,10 +115,22 @@ func (h *VolumeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tracker := lastTracker.Trackers[symbol]
 		ticker := map[string]interface{}{}
 		ticker["nvh"] = lastTracker.Trackers[symbol].Histogram.NetVolume
+		ticker["bvh"] = lastTracker.Trackers[symbol].Histogram.BuyVolume
+		ticker["vh"] = lastTracker.Trackers[symbol].Histogram.Volume
 		ticker["vol"] = tracker.LastTick().TotalQuoteVolume
 		ticker["priceChange1h"] = tracker.Metrics[60].PriceChangePercent
 		ticker["nv60"] = tracker.Metrics[60].NetVolume
 		ticker["v60"] = tracker.Metrics[60].TotalVolume
+
+		ticker["v24h"] = tracker.Histogram.Volume24
+
+		if tracker.Metrics[60].TotalTrades > 0 {
+			ticker["t60pb"] = float64(tracker.Metrics[60].BuyTrades) / float64(tracker.Metrics[60].TotalTrades)
+		} else {
+			ticker["t60pb"] = float64(0)
+		}
+
+		ticker["t60"] = tracker.Metrics[60].TotalTrades
 		data[symbol] = ticker
 	}
 	response := map[string]interface{}{
