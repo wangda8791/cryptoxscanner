@@ -1,5 +1,7 @@
 APP :=		cryptoxscanner
-VERSION ?=	0.1.0dev$(shell date +%s)
+ifndef VERSION
+VERSION :=	0.1.0dev$(shell date +%s)
+endif
 
 .PHONY:		build dist
 
