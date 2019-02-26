@@ -34,6 +34,7 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/version"
+	"math"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -188,6 +189,32 @@ func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
 
 	message["r_24"] = tracker.H24Metrics.Range
 	message["rp_24"] = tracker.H24Metrics.RangePercent
+
+	if tracker.HaveVwap {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("vwap_%dm", i)] = Round8(k.Vwap)
+		}
+	}
+
+	if tracker.HaveTotalVolume {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("total_volume_%d", i)] = Round8(k.TotalVolume)
+		}
+	}
+
+	if tracker.HaveNetVolume {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("nv_%d", i)] = Round8(k.NetVolume)
+			message[fmt.Sprintf("bv_%d", i)] = Round8(k.BuyVolume)
+			message[fmt.Sprintf("sv_%d", i)] = Round8(k.SellVolume)
+		}
+	}
+
+	for i, k := range tracker.Metrics {
+		if !math.IsNaN(k.RSI) {
+			message[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
+		}
+	}
 
 	return message
 }
