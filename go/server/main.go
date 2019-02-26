@@ -61,7 +61,7 @@ func ServerMain(options Options) {
 	// socket can subscribe to specific symbol feeds directly. This should be
 	// abstracted with some sort of broker.
 	binanceFeed := NewBinanceRunner()
-	binanceWebSocketHandler := NewBroadcastWebSocketHandler()
+	binanceWebSocketHandler := NewWebSocketHandler(binanceFeed)
 	binanceFeed.websocket = binanceWebSocketHandler
 	binanceWebSocketHandler.Feed = binanceFeed
 	go binanceFeed.Run()

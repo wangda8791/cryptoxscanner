@@ -126,13 +126,14 @@ func (c *WebSocketClient) WriteTextMessage(msg []byte) error {
 }
 
 type TickerWebSocketHandler struct {
-	upgrader    websocket.Upgrader
-	clients     map[*WebSocketClient]bool
-	clientsLock sync.RWMutex
-	Feed        *BinanceRunner
+	upgrader     websocket.Upgrader
+	clients      map[*WebSocketClient]bool
+	clientsLock  sync.RWMutex
+	Feed         *BinanceRunner
+	monitorCache *WsMonitorCacheFilter
 }
 
-func NewBroadcastWebSocketHandler() *TickerWebSocketHandler {
+func NewWebSocketHandler(binanceRunner *BinanceRunner) *TickerWebSocketHandler {
 	handler := TickerWebSocketHandler{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -140,8 +141,10 @@ func NewBroadcastWebSocketHandler() *TickerWebSocketHandler {
 			},
 			EnableCompression: true,
 		},
-		clients: make(map[*WebSocketClient]bool),
+		clients:      make(map[*WebSocketClient]bool),
+		monitorCache: NewWsMonitorCacheFilter(binanceRunner.Subscribe()),
 	}
+	go handler.monitorCache.Run()
 	return &handler
 }
 
@@ -191,8 +194,8 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	go h.readLoop(client)
 
 	if symbol != "" {
-		channel := h.Feed.Subscribe(symbol)
-		defer h.Feed.Unsubscribe(symbol, channel)
+		channel := h.Feed.SubscribeSymbol(symbol)
+		defer h.Feed.UnsubscribeSymbol(symbol, channel)
 		for {
 			if client.done {
 				break
@@ -217,24 +220,40 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 	} else {
+		isMonitor := false
+		var channel chan *websocket.PreparedMessage
+		if strings.HasPrefix(r.URL.Path, "/ws/binance/monitor") {
+			isMonitor = true
+			channel = h.monitorCache.Subscribe()
+			defer h.monitorCache.Unsubscribe(channel)
+		}
 		for {
 			if client.done {
 				break
 			}
-			msg := <-client.sendChannel
-			if msg == nil {
-				goto Done
-			}
 
-			if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
-				continue
-			}
+			select {
+			case trackers := <-channel:
+				client.conn.WritePreparedMessage(trackers)
+			case msg := <-client.sendChannel:
+				if msg == nil {
+					goto Done
+				}
 
-			if err := client.conn.WritePreparedMessage(msg); err != nil {
-				log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
-				goto Done
+				if isMonitor {
+					continue
+				}
+
+				if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
+					continue
+				}
+
+				if err := client.conn.WritePreparedMessage(msg); err != nil {
+					log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
+					goto Done
+				}
+				lastUpdate = time.Now()
 			}
-			lastUpdate = time.Now()
 		}
 	}
 Done:
@@ -292,4 +311,95 @@ func (h *TickerWebSocketHandler) Broadcast(v *TickerStream) error {
 	}
 
 	return nil
+}
+
+type WsMonitorCacheFilter struct {
+	subscribers map[chan *websocket.PreparedMessage]bool
+	source      chan *TickerTrackerMap
+}
+
+func NewWsMonitorCacheFilter(source chan *TickerTrackerMap) *WsMonitorCacheFilter {
+	return &WsMonitorCacheFilter{
+		subscribers: map[chan *websocket.PreparedMessage]bool{},
+		source:      source,
+	}
+}
+
+func (f *WsMonitorCacheFilter) Subscribe() chan *websocket.PreparedMessage {
+	channel := make(chan *websocket.PreparedMessage, 1)
+	f.subscribers[channel] = true
+	return channel
+}
+
+func (f *WsMonitorCacheFilter) Unsubscribe(channel chan *websocket.PreparedMessage) {
+	delete(f.subscribers, channel)
+}
+
+func (f *WsMonitorCacheFilter) BuildMessage(trackers *TickerTrackerMap) []interface{} {
+	entries := []interface{}{}
+	for key := range trackers.Trackers {
+		tracker := trackers.Trackers[key]
+		last := tracker.LastTick()
+		key := tracker.Symbol
+
+		entry := map[string]interface{}{
+			"symbol": key,
+			"close":  last.CurrentDayClose,
+			"bid":    last.Bid,
+			"ask":    last.Ask,
+			"high":   last.HighPrice,
+			"low":    last.LowPrice,
+			"volume": last.TotalQuoteVolume,
+
+			"price_change_pct": map[string]float64{
+				"1m":  tracker.Metrics[1].PriceChangePercent,
+				"5m":  tracker.Metrics[5].PriceChangePercent,
+				"10m": tracker.Metrics[10].PriceChangePercent,
+				"15m": tracker.Metrics[15].PriceChangePercent,
+				"1h":  tracker.Metrics[60].PriceChangePercent,
+				"24h": tracker.LastTick().PriceChangePercent,
+			},
+
+			"volume_change_pct": map[string]float64{
+				"1m":  tracker.Metrics[1].VolumeChangePercent,
+				"2m":  tracker.Metrics[2].VolumeChangePercent,
+				"3m":  tracker.Metrics[3].VolumeChangePercent,
+				"4m":  tracker.Metrics[4].VolumeChangePercent,
+				"5m":  tracker.Metrics[5].VolumeChangePercent,
+				"10m": tracker.Metrics[10].VolumeChangePercent,
+				"15m": tracker.Metrics[15].VolumeChangePercent,
+				"1h":  tracker.Metrics[60].VolumeChangePercent,
+			},
+
+			"timestamp": last.Timestamp(),
+		}
+		entries = append(entries, entry)
+	}
+
+	return entries
+}
+
+func (f *WsMonitorCacheFilter) Run() {
+	for {
+		trackers := <-f.source
+		message := f.BuildMessage(trackers)
+		output := TickerStream{Tickers: &message}
+		buf, err := json.Marshal(output)
+		if err != nil {
+			log.Errorf("Failed to encode monitor message as JSON: %v", err)
+			continue
+		}
+		pm, err := websocket.NewPreparedMessage(websocket.TextMessage, buf)
+		if err != nil {
+			log.Errorf("Failed to prepare monitor websocket message: %v", err)
+			continue
+		}
+		for subscriber := range f.subscribers {
+			select {
+			case subscriber <- pm:
+			default:
+				log.Warnf("Failed to send cached monitor message to subscriber: would block")
+			}
+		}
+	}
 }

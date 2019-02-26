@@ -34,9 +34,10 @@ import (
 )
 
 type BinanceRunner struct {
-	trackers    *TickerTrackerMap
-	websocket   *TickerWebSocketHandler
-	subscribers map[string]map[chan interface{}]bool
+	trackers          *TickerTrackerMap
+	websocket         *TickerWebSocketHandler
+	symbolSubscribers map[string]map[chan interface{}]bool
+	subscribers  map[chan *TickerTrackerMap]bool
 	tickerStream *binance.TickerStream
 
 	Cached    TickerTrackerMap
@@ -45,27 +46,40 @@ type BinanceRunner struct {
 
 func NewBinanceRunner() *BinanceRunner {
 	feed := BinanceRunner{
-		trackers: NewTickerTrackerMap(),
+		trackers:    NewTickerTrackerMap(),
+		subscribers: map[chan *TickerTrackerMap]bool{},
 	}
 	return &feed
 }
 
-func (b *BinanceRunner) Subscribe(symbol string) chan interface{} {
-	channel := make(chan interface{})
-	if b.subscribers == nil {
-		b.subscribers = map[string]map[chan interface{}]bool{}
-	}
-	if b.subscribers[symbol] == nil {
-		b.subscribers[symbol] = map[chan interface{}]bool{}
-	}
-	b.subscribers[symbol][channel] = true
+func (b *BinanceRunner) Subscribe() chan *TickerTrackerMap {
+	channel := make(chan *TickerTrackerMap, 1)
+	b.subscribers[channel] = true
 	return channel
 }
 
-func (b *BinanceRunner) Unsubscribe(symbol string, channel chan interface{}) {
-	if b.subscribers[symbol] != nil {
-		if _, exists := b.subscribers[symbol][channel]; exists {
-			delete(b.subscribers[symbol], channel)
+func (b *BinanceRunner) Unsubscribe(channel chan *TickerTrackerMap) {
+	if _, exists := b.subscribers[channel]; exists {
+		delete(b.subscribers, channel)
+	}
+}
+
+func (b *BinanceRunner) SubscribeSymbol(symbol string) chan interface{} {
+	channel := make(chan interface{})
+	if b.symbolSubscribers == nil {
+		b.symbolSubscribers = map[string]map[chan interface{}]bool{}
+	}
+	if b.symbolSubscribers[symbol] == nil {
+		b.symbolSubscribers[symbol] = map[chan interface{}]bool{}
+	}
+	b.symbolSubscribers[symbol][channel] = true
+	return channel
+}
+
+func (b *BinanceRunner) UnsubscribeSymbol(symbol string, channel chan interface{}) {
+	if b.symbolSubscribers[symbol] != nil {
+		if _, exists := b.symbolSubscribers[symbol][channel]; exists {
+			delete(b.symbolSubscribers[symbol], channel)
 		}
 	}
 }
@@ -77,7 +91,7 @@ func (b *BinanceRunner) Run() {
 	binanceTradeStream := binance.NewTradeStream()
 	go binanceTradeStream.Run()
 
-	// Subscribe to the trade stream. This will start queuing trades
+	// SubscribeSymbol to the trade stream. This will start queuing trades
 	// until the cache is done loading.
 	tradeChannel := binanceTradeStream.Subscribe()
 
@@ -154,7 +168,7 @@ func (b *BinanceRunner) Run() {
 					update := buildUpdateMessage(tracker)
 					message = append(message, update)
 
-					for subscriber := range b.subscribers[key] {
+					for subscriber := range b.symbolSubscribers[key] {
 						select {
 						case subscriber <- update:
 						default:
@@ -164,6 +178,14 @@ func (b *BinanceRunner) Run() {
 				}
 				if err := b.websocket.Broadcast(&TickerStream{Tickers: &message}); err != nil {
 					log.Printf("error: broadcasting message: %v", err)
+				}
+
+				for subscriber := range b.subscribers {
+					select {
+					case subscriber <- b.trackers:
+					default:
+						log.Printf("warning: failed to send tracker to subscriber")
+					}
 				}
 
 				b.CacheLock.Lock()
