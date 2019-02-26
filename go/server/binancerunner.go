@@ -35,7 +35,6 @@ import (
 
 type BinanceRunner struct {
 	trackers          *TickerTrackerMap
-	websocket         *TickerWebSocketHandler
 	symbolSubscribers map[string]map[chan interface{}]bool
 	subscribers  map[chan *TickerTrackerMap]bool
 	tickerStream *binance.TickerStream
@@ -85,8 +84,6 @@ func (b *BinanceRunner) UnsubscribeSymbol(symbol string, channel chan interface{
 }
 
 func (b *BinanceRunner) Run() {
-	lastUpdate := time.Now()
-
 	// Create and start the trade stream.
 	binanceTradeStream := binance.NewTradeStream()
 	go binanceTradeStream.Run()
@@ -158,33 +155,22 @@ func (b *BinanceRunner) Run() {
 
 				b.updateTrackers(b.trackers, tickers, true)
 
-				// Create enhanced feed.
-				message := []interface{}{}
 				for key := range b.trackers.Trackers {
-					tracker := b.trackers.Trackers[key]
-					if tracker.LastUpdate.Before(lastUpdate) {
+					count := len(b.symbolSubscribers[key])
+					if count == 0 {
 						continue
 					}
-					update := buildUpdateMessage(tracker)
-					message = append(message, update)
-
+					message := WsBuildCompleteEntry(b.trackers.Trackers[key])
 					for subscriber := range b.symbolSubscribers[key] {
-						select {
-						case subscriber <- update:
-						default:
-							log.Printf("warning: feed subscriber is blocked\n")
-						}
+						subscriber <- message
 					}
-				}
-				if err := b.websocket.Broadcast(&TickerStream{Tickers: &message}); err != nil {
-					log.Printf("error: broadcasting message: %v", err)
 				}
 
 				for subscriber := range b.subscribers {
 					select {
 					case subscriber <- b.trackers:
 					default:
-						log.Printf("warning: failed to send tracker to subscriber")
+						log.Warnf("warning: failed to send trackers to subscriber")
 					}
 				}
 
@@ -193,7 +179,6 @@ func (b *BinanceRunner) Run() {
 				b.CacheLock.Unlock()
 
 				now := time.Now()
-				lastUpdate = now
 				processingTime := now.Sub(loopStartTime) - waitTime
 				lagTime := now.Sub(lastServerTickerTimestamp)
 				tradeLag := now.Sub(lastTradeTime)

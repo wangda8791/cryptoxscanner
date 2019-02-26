@@ -26,8 +26,10 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -130,7 +132,8 @@ type TickerWebSocketHandler struct {
 	clients      map[*WebSocketClient]bool
 	clientsLock  sync.RWMutex
 	Feed         *BinanceRunner
-	monitorCache *WsMonitorCacheFilter
+	monitorCache *WsSourceCache
+	liveCache    *WsSourceCache
 }
 
 func NewWebSocketHandler(binanceRunner *BinanceRunner) *TickerWebSocketHandler {
@@ -142,9 +145,11 @@ func NewWebSocketHandler(binanceRunner *BinanceRunner) *TickerWebSocketHandler {
 			EnableCompression: true,
 		},
 		clients:      make(map[*WebSocketClient]bool),
-		monitorCache: NewWsMonitorCacheFilter(binanceRunner.Subscribe()),
+		monitorCache: NewWsSourceCache(binanceRunner.Subscribe(), WsBuildMonitorMessage),
+		liveCache:    NewWsSourceCache(binanceRunner.Subscribe(), WsBuildCompleteMessage),
 	}
 	go handler.monitorCache.Run()
+	go handler.liveCache.Run()
 	return &handler
 }
 
@@ -220,12 +225,13 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 	} else {
-		isMonitor := false
 		var channel chan *websocket.PreparedMessage
 		if strings.HasPrefix(r.URL.Path, "/ws/binance/monitor") {
-			isMonitor = true
 			channel = h.monitorCache.Subscribe()
 			defer h.monitorCache.Unsubscribe(channel)
+		} else {
+			channel = h.liveCache.Subscribe()
+			defer h.liveCache.Unsubscribe(channel)
 		}
 		for {
 			if client.done {
@@ -234,22 +240,11 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 
 			select {
 			case trackers := <-channel:
-				client.conn.WritePreparedMessage(trackers)
-			case msg := <-client.sendChannel:
-				if msg == nil {
-					goto Done
-				}
-
-				if isMonitor {
-					continue
-				}
-
 				if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
 					continue
 				}
-
-				if err := client.conn.WritePreparedMessage(msg); err != nil {
-					log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
+				if err := client.conn.WritePreparedMessage(trackers); err != nil {
+					log.Errorf("error: websocket write of prepared message: %v", err)
 					goto Done
 				}
 				lastUpdate = time.Now()
@@ -275,67 +270,144 @@ type TickerStream struct {
 	Tickers *[]interface{} `json:"tickers"`
 }
 
-func (h *TickerWebSocketHandler) Broadcast(v *TickerStream) error {
-	buf, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	preparedMessage, err := websocket.NewPreparedMessage(websocket.TextMessage, buf)
-	if err != nil {
-		log.Printf("error: failed to prepare websocket message: %v\n", err)
-		return err
-	}
-
-	h.clientsLock.RLock()
-	defer h.clientsLock.RUnlock()
-
-	for client := range h.clients {
-		if !client.done {
-			select {
-			case client.sendChannel <- preparedMessage:
-				client.blocks = 0
-			default:
-				client.blocks += 1
-				if client.blocks == 3 {
-					log.Printf("WebSocket client [%v] appears to be blocked. Dropping.\n",
-						client.GetRemoteAddr())
-					client.done = true
-				}
-			}
-		}
-
-		if client.done {
-			h.CloseClient(client)
-		}
-	}
-
-	return nil
-}
-
-type WsMonitorCacheFilter struct {
+type WsSourceCache struct {
 	subscribers map[chan *websocket.PreparedMessage]bool
 	source      chan *TickerTrackerMap
+	builder     func(trackerMap *TickerTrackerMap) []interface{}
 }
 
-func NewWsMonitorCacheFilter(source chan *TickerTrackerMap) *WsMonitorCacheFilter {
-	return &WsMonitorCacheFilter{
+func NewWsSourceCache(source chan *TickerTrackerMap, builder func(trackerMap *TickerTrackerMap) []interface{}) *WsSourceCache {
+	return &WsSourceCache{
 		subscribers: map[chan *websocket.PreparedMessage]bool{},
 		source:      source,
+		builder:     builder,
 	}
 }
 
-func (f *WsMonitorCacheFilter) Subscribe() chan *websocket.PreparedMessage {
+func (f *WsSourceCache) Subscribe() chan *websocket.PreparedMessage {
 	channel := make(chan *websocket.PreparedMessage, 1)
 	f.subscribers[channel] = true
 	return channel
 }
 
-func (f *WsMonitorCacheFilter) Unsubscribe(channel chan *websocket.PreparedMessage) {
+func (f *WsSourceCache) Unsubscribe(channel chan *websocket.PreparedMessage) {
 	delete(f.subscribers, channel)
 }
 
-func (f *WsMonitorCacheFilter) BuildMessage(trackers *TickerTrackerMap) []interface{} {
+func (f *WsSourceCache) Run() {
+	for {
+		trackers := <-f.source
+		message := f.builder(trackers)
+		output := TickerStream{Tickers: &message}
+		buf, err := json.Marshal(output)
+		if err != nil {
+			log.Errorf("Failed to encode monitor message as JSON: %v", err)
+			continue
+		}
+		pm, err := websocket.NewPreparedMessage(websocket.TextMessage, buf)
+		if err != nil {
+			log.Errorf("Failed to prepare monitor websocket message: %v", err)
+			continue
+		}
+		for subscriber := range f.subscribers {
+			select {
+			case subscriber <- pm:
+			default:
+				log.Warnf("Failed to send cached monitor message to subscriber: would block")
+			}
+		}
+	}
+}
+
+func WsBuildCompleteMessage(trackers *TickerTrackerMap) []interface{} {
+	entries := []interface{}{}
+	for key := range trackers.Trackers {
+		tracker := trackers.Trackers[key]
+		m := WsBuildCompleteEntry(tracker)
+		entries = append(entries, m)
+	}
+	return entries
+}
+
+func WsBuildCompleteEntry(tracker *TickerTracker) map[string]interface{} {
+	last := tracker.LastTick()
+	key := tracker.Symbol
+
+	message := map[string]interface{}{
+		"symbol": key,
+		"close":  last.CurrentDayClose,
+		"bid":    last.Bid,
+		"ask":    last.Ask,
+		"high":   last.HighPrice,
+		"low":    last.LowPrice,
+		"volume": last.TotalQuoteVolume,
+
+		"price_change_pct": map[string]float64{
+			"1m":  tracker.Metrics[1].PriceChangePercent,
+			"5m":  tracker.Metrics[5].PriceChangePercent,
+			"10m": tracker.Metrics[10].PriceChangePercent,
+			"15m": tracker.Metrics[15].PriceChangePercent,
+			"1h":  tracker.Metrics[60].PriceChangePercent,
+			"24h": tracker.LastTick().PriceChangePercent,
+		},
+
+		"volume_change_pct": map[string]float64{
+			"1m":  tracker.Metrics[1].VolumeChangePercent,
+			"2m":  tracker.Metrics[2].VolumeChangePercent,
+			"3m":  tracker.Metrics[3].VolumeChangePercent,
+			"4m":  tracker.Metrics[4].VolumeChangePercent,
+			"5m":  tracker.Metrics[5].VolumeChangePercent,
+			"10m": tracker.Metrics[10].VolumeChangePercent,
+			"15m": tracker.Metrics[15].VolumeChangePercent,
+			"1h":  tracker.Metrics[60].VolumeChangePercent,
+		},
+
+		"timestamp": last.Timestamp(),
+	}
+
+	for _, bucket := range Buckets {
+		metrics := tracker.Metrics[bucket]
+
+		message[fmt.Sprintf("l_%d", bucket)] = metrics.Low
+		message[fmt.Sprintf("h_%d", bucket)] = metrics.High
+
+		message[fmt.Sprintf("r_%d", bucket)] = metrics.Range
+		message[fmt.Sprintf("rp_%d", bucket)] = metrics.RangePercent
+	}
+
+	message["r_24"] = tracker.H24Metrics.Range
+	message["rp_24"] = tracker.H24Metrics.RangePercent
+
+	if tracker.HaveVwap {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("vwap_%dm", i)] = Round8(k.Vwap)
+		}
+	}
+
+	if tracker.HaveTotalVolume {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("total_volume_%d", i)] = Round8(k.TotalVolume)
+		}
+	}
+
+	if tracker.HaveNetVolume {
+		for i, k := range tracker.Metrics {
+			message[fmt.Sprintf("nv_%d", i)] = Round8(k.NetVolume)
+			message[fmt.Sprintf("bv_%d", i)] = Round8(k.BuyVolume)
+			message[fmt.Sprintf("sv_%d", i)] = Round8(k.SellVolume)
+		}
+	}
+
+	for i, k := range tracker.Metrics {
+		if !math.IsNaN(k.RSI) {
+			message[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
+		}
+	}
+
+	return message
+}
+
+func WsBuildMonitorMessage(trackers *TickerTrackerMap) []interface{} {
 	entries := []interface{}{}
 	for key := range trackers.Trackers {
 		tracker := trackers.Trackers[key]
@@ -377,29 +449,4 @@ func (f *WsMonitorCacheFilter) BuildMessage(trackers *TickerTrackerMap) []interf
 	}
 
 	return entries
-}
-
-func (f *WsMonitorCacheFilter) Run() {
-	for {
-		trackers := <-f.source
-		message := f.BuildMessage(trackers)
-		output := TickerStream{Tickers: &message}
-		buf, err := json.Marshal(output)
-		if err != nil {
-			log.Errorf("Failed to encode monitor message as JSON: %v", err)
-			continue
-		}
-		pm, err := websocket.NewPreparedMessage(websocket.TextMessage, buf)
-		if err != nil {
-			log.Errorf("Failed to prepare monitor websocket message: %v", err)
-			continue
-		}
-		for subscriber := range f.subscribers {
-			select {
-			case subscriber <- pm:
-			default:
-				log.Warnf("Failed to send cached monitor message to subscriber: would block")
-			}
-		}
-	}
 }

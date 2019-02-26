@@ -34,7 +34,6 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/version"
-	"math"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -62,7 +61,6 @@ func ServerMain(options Options) {
 	// abstracted with some sort of broker.
 	binanceFeed := NewBinanceRunner()
 	binanceWebSocketHandler := NewWebSocketHandler(binanceFeed)
-	binanceFeed.websocket = binanceWebSocketHandler
 	binanceWebSocketHandler.Feed = binanceFeed
 	go binanceFeed.Run()
 
@@ -139,84 +137,6 @@ func (h *VolumeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	encoder := json.NewEncoder(w)
 	encoder.Encode(response)
-}
-
-func buildUpdateMessage(tracker *TickerTracker) map[string]interface{} {
-	last := tracker.LastTick()
-	key := tracker.Symbol
-
-	message := map[string]interface{}{
-		"symbol": key,
-		"close":  last.CurrentDayClose,
-		"bid":    last.Bid,
-		"ask":    last.Ask,
-		"high":   last.HighPrice,
-		"low":    last.LowPrice,
-		"volume": last.TotalQuoteVolume,
-
-		"price_change_pct": map[string]float64{
-			"1m":  tracker.Metrics[1].PriceChangePercent,
-			"5m":  tracker.Metrics[5].PriceChangePercent,
-			"10m": tracker.Metrics[10].PriceChangePercent,
-			"15m": tracker.Metrics[15].PriceChangePercent,
-			"1h":  tracker.Metrics[60].PriceChangePercent,
-			"24h": tracker.LastTick().PriceChangePercent,
-		},
-
-		"volume_change_pct": map[string]float64{
-			"1m":  tracker.Metrics[1].VolumeChangePercent,
-			"2m":  tracker.Metrics[2].VolumeChangePercent,
-			"3m":  tracker.Metrics[3].VolumeChangePercent,
-			"4m":  tracker.Metrics[4].VolumeChangePercent,
-			"5m":  tracker.Metrics[5].VolumeChangePercent,
-			"10m": tracker.Metrics[10].VolumeChangePercent,
-			"15m": tracker.Metrics[15].VolumeChangePercent,
-			"1h":  tracker.Metrics[60].VolumeChangePercent,
-		},
-
-		"timestamp": last.Timestamp(),
-	}
-
-	for _, bucket := range Buckets {
-		metrics := tracker.Metrics[bucket]
-
-		message[fmt.Sprintf("l_%d", bucket)] = metrics.Low
-		message[fmt.Sprintf("h_%d", bucket)] = metrics.High
-
-		message[fmt.Sprintf("r_%d", bucket)] = metrics.Range
-		message[fmt.Sprintf("rp_%d", bucket)] = metrics.RangePercent
-	}
-
-	message["r_24"] = tracker.H24Metrics.Range
-	message["rp_24"] = tracker.H24Metrics.RangePercent
-
-	if tracker.HaveVwap {
-		for i, k := range tracker.Metrics {
-			message[fmt.Sprintf("vwap_%dm", i)] = Round8(k.Vwap)
-		}
-	}
-
-	if tracker.HaveTotalVolume {
-		for i, k := range tracker.Metrics {
-			message[fmt.Sprintf("total_volume_%d", i)] = Round8(k.TotalVolume)
-		}
-	}
-
-	if tracker.HaveNetVolume {
-		for i, k := range tracker.Metrics {
-			message[fmt.Sprintf("nv_%d", i)] = Round8(k.NetVolume)
-			message[fmt.Sprintf("bv_%d", i)] = Round8(k.BuyVolume)
-			message[fmt.Sprintf("sv_%d", i)] = Round8(k.SellVolume)
-		}
-	}
-
-	for i, k := range tracker.Metrics {
-		if !math.IsNaN(k.RSI) {
-			message[fmt.Sprintf("rsi_%d", i*60)] = Round8(k.RSI)
-		}
-	}
-
-	return message
 }
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
