@@ -23,11 +23,7 @@
 // SOFTWARE.
 
 import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
-import {
-    BinanceBaseCoins,
-    ScannerApiService,
-    SymbolUpdate,
-} from '../scanner-api.service';
+import {BinanceBaseCoins, ScannerApiService, SymbolUpdate,} from '../scanner-api.service';
 import {Subscription} from 'rxjs/Subscription';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import * as $ from "jquery";
@@ -260,10 +256,10 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                     this.saveConfig();
                 } else if (permission === "denied") {
                     toastr.warning(
-                            `Failed to enable desktop notifications: Permission ${permission}.`, null, {
-                                progressBar: true,
-                                closeButton: true,
-                            });
+                        `Failed to enable desktop notifications: Permission ${permission}.`, null, {
+                            progressBar: true,
+                            closeButton: true,
+                        });
                 }
             });
         } else {
@@ -311,8 +307,18 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         this.saveToLocalStorage(this.localStorageConfigKey, this.config);
     }
 
+    inIframe: boolean = false;
+    redirectLocation: string = location.href;
+
     ngOnInit() {
-        document.title = `Token Monitor: ${this.getPageTitle()}`;
+        document.title = `Crypto Monitor: ${this.getPageTitle()}`;
+
+        // Attempt to break out of iframe...
+        if (window != top && window.location !== window.parent.location) {
+            this.inIframe = true;
+            top.location.href = location.href;
+            return;
+        }
 
         this.startStream();
 
@@ -398,28 +404,28 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
     private startStream() {
         console.log(`Connecting to ${this.exchange} feed.`);
         this.stream = this.connect()
-                .subscribe((tickers) => this.update(tickers),
-                        () => {
-                            // Unfortunately not much is given for an error
-                            // reason.
-                            this.banner = {
-                                show: true,
-                                className: "alert-danger",
-                                message: "WebSocket error. Reconnecting.",
-                            };
-                            setTimeout(() => {
-                                this.startStream();
-                            }, 1000);
-                        }, () => {
-                            this.banner = {
-                                show: true,
-                                className: "alert-warning",
-                                message: "WebSocket closed. Reconnecting.",
-                            };
-                            setTimeout(() => {
-                                this.startStream();
-                            }, 1000);
-                        });
+            .subscribe((tickers) => this.update(tickers),
+                () => {
+                    // Unfortunately not much is given for an error
+                    // reason.
+                    this.banner = {
+                        show: true,
+                        className: "alert-danger",
+                        message: "WebSocket error. Reconnecting.",
+                    };
+                    setTimeout(() => {
+                        this.startStream();
+                    }, 1000);
+                }, () => {
+                    this.banner = {
+                        show: true,
+                        className: "alert-warning",
+                        message: "WebSocket closed. Reconnecting.",
+                    };
+                    setTimeout(() => {
+                        this.startStream();
+                    }, 1000);
+                });
     }
 
     changeUpdateInterval() {
@@ -450,9 +456,9 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         const tickers: SymbolUpdate[] = update.tickers;
 
         const blacklist = this.config.blacklist.split(/[\s,]/)
-                .filter((e) => {
-                    return e.length > 0;
-                });
+            .filter((e) => {
+                return e.length > 0;
+            });
 
         // Map the tickers by symbol. Not all updates contain all tickers,
         // so this keeps a stable set of tickers for sorting on.
@@ -472,7 +478,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             }
             if (skip) {
-                delete(this.tickerMap[ticker.symbol]);
+                delete (this.tickerMap[ticker.symbol]);
                 continue;
             }
 
@@ -580,7 +586,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             return meta;
         }).sort((a, b) => {
             return this.symbolTrackerSortFunc(
-                    a, b, this.config.gainers.sortBy, this.config.gainers.sortOrder);
+                a, b, this.config.gainers.sortBy, this.config.gainers.sortOrder);
         });
     }
 
@@ -608,7 +614,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             return meta;
         }).sort((a, b) => {
             return this.symbolTrackerSortFunc(
-                    a, b, this.config.losers.sortBy, this.config.losers.sortOrder);
+                a, b, this.config.losers.sortBy, this.config.losers.sortOrder);
         });
     }
 
@@ -628,7 +634,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
             return meta;
         }).slice(0, 10).sort((a, b) => {
             return this.symbolTrackerSortFunc(
-                    a, b, this.config.volume.sortBy, this.config.volume.sortOrder);
+                a, b, this.config.volume.sortBy, this.config.volume.sortOrder);
         });
     }
 
@@ -637,8 +643,8 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
         const alertConfig = this.config.alerts;
 
         if (!(alertConfig.drop.enabled ||
-                alertConfig.gain.enabled ||
-                alertConfig.volume.enabled)) {
+            alertConfig.gain.enabled ||
+            alertConfig.volume.enabled)) {
             return;
         }
 

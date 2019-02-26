@@ -42,6 +42,7 @@ import {BaseassetPipe} from './baseasset.pipe';
 import {ExchangesymbolPipe} from './exchangesymbol.pipe';
 import {HodlooLinkPipe} from './hodloo-link.pipe';
 import { BinanceVolumeComponent } from './binance-volume/binance-volume.component';
+import {BinanceNewvolumeComponent} from "./binance-newvolume/binance-newvolume.component";
 
 @Component({
     template: ``,
@@ -97,6 +98,12 @@ const appRoutes: Routes = [
     },
 
     {
+        path: "binance/newvolume",
+        pathMatch: "prefix",
+        component: BinanceNewvolumeComponent,
+    },
+
+    {
         path: "kucoin/monitor",
         pathMatch: "prefix",
         component: KuCoinMonitorRedirectComponent,
@@ -130,6 +137,7 @@ const appRoutes: Routes = [
         KuCoinMonitorRedirectComponent,
         KuCoinLiveRedirectComponent,
         BinanceVolumeComponent,
+        BinanceNewvolumeComponent,
     ],
     imports: [
         BrowserModule,
