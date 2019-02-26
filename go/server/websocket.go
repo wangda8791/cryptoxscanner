@@ -128,15 +128,13 @@ func (c *WebSocketClient) WriteTextMessage(msg []byte) error {
 }
 
 type TickerWebSocketHandler struct {
-	upgrader     websocket.Upgrader
-	clients      map[*WebSocketClient]bool
-	clientsLock  sync.RWMutex
-	Feed         *BinanceRunner
-	monitorCache *WsSourceCache
-	liveCache    *WsSourceCache
+	upgrader      websocket.Upgrader
+	clientsLock   sync.RWMutex
+	binanceRunner *BinanceRunner
+	source        *WsSourceCache
 }
 
-func NewWebSocketHandler(binanceRunner *BinanceRunner) *TickerWebSocketHandler {
+func NewWebSocketHandler(binanceRunner *BinanceRunner, source *WsSourceCache) *TickerWebSocketHandler {
 	handler := TickerWebSocketHandler{
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -144,24 +142,10 @@ func NewWebSocketHandler(binanceRunner *BinanceRunner) *TickerWebSocketHandler {
 			},
 			EnableCompression: true,
 		},
-		clients:      make(map[*WebSocketClient]bool),
-		monitorCache: NewWsSourceCache(binanceRunner.Subscribe(), WsBuildMonitorMessage),
-		liveCache:    NewWsSourceCache(binanceRunner.Subscribe(), WsBuildCompleteMessage),
+		source:        source,
+		binanceRunner: binanceRunner,
 	}
-	go handler.monitorCache.Run()
-	go handler.liveCache.Run()
 	return &handler
-}
-
-func (h *TickerWebSocketHandler) CloseClient(client *WebSocketClient) {
-	delete(h.clients, client)
-	client.conn.Close()
-}
-
-func (h *TickerWebSocketHandler) AddClient(client *WebSocketClient) {
-	h.clientsLock.Lock()
-	defer h.clientsLock.Unlock()
-	h.clients[client] = true
 }
 
 func (h *TickerWebSocketHandler) Upgrade(w http.ResponseWriter, r *http.Request) (*WebSocketClient, error) {
@@ -178,7 +162,6 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		log.Printf("Failed to upgrade websocket connection: %v\n", err)
 		return
 	}
-	h.AddClient(client)
 	log.Printf("WebSocket connnected to %s: RemoteAddr=%v; Origin=%s\n",
 		r.URL.String(),
 		client.GetRemoteAddr(),
@@ -199,8 +182,8 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	go h.readLoop(client)
 
 	if symbol != "" {
-		channel := h.Feed.SubscribeSymbol(symbol)
-		defer h.Feed.UnsubscribeSymbol(symbol, channel)
+		channel := h.binanceRunner.SubscribeSymbol(symbol)
+		defer h.binanceRunner.UnsubscribeSymbol(symbol, channel)
 		for {
 			if client.done {
 				break
@@ -226,13 +209,8 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		}
 	} else {
 		var channel chan *websocket.PreparedMessage
-		if strings.HasPrefix(r.URL.Path, "/ws/binance/monitor") {
-			channel = h.monitorCache.Subscribe()
-			defer h.monitorCache.Unsubscribe(channel)
-		} else {
-			channel = h.liveCache.Subscribe()
-			defer h.liveCache.Unsubscribe(channel)
-		}
+		channel = h.source.Subscribe()
+		defer h.source.Unsubscribe(channel)
 		for {
 			if client.done {
 				break

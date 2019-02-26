@@ -59,15 +59,23 @@ func ServerMain(options Options) {
 	// Start the Binance runner. This is a little bit of a message as the
 	// socket can subscribe to specific symbol feeds directly. This should be
 	// abstracted with some sort of broker.
-	binanceFeed := NewBinanceRunner()
-	binanceWebSocketHandler := NewWebSocketHandler(binanceFeed)
-	binanceWebSocketHandler.Feed = binanceFeed
-	go binanceFeed.Run()
+	binanceRunner := NewBinanceRunner()
+	go binanceRunner.Run()
+
+	wsMonitorSourceCache := NewWsSourceCache(binanceRunner.Subscribe(), WsBuildMonitorMessage)
+	wsMonitorHandler := NewWebSocketHandler(binanceRunner, wsMonitorSourceCache)
+	go wsMonitorSourceCache.Run()
+
+	wsLiveSourceCache := NewWsSourceCache(binanceRunner.Subscribe(), WsBuildCompleteMessage)
+	wsLiveHandler := NewWebSocketHandler(binanceRunner, wsLiveSourceCache)
+	go wsLiveSourceCache.Run()
+
+	binanceWebSocketHandler := NewWebSocketHandler(binanceRunner, nil)
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/ws/binance/live", binanceWebSocketHandler.Handle)
-	router.HandleFunc("/ws/binance/monitor", binanceWebSocketHandler.Handle)
+	router.HandleFunc("/ws/binance/live", wsLiveHandler.Handle)
+	router.HandleFunc("/ws/binance/monitor", wsMonitorHandler.Handle)
 	router.HandleFunc("/ws/binance/symbol", binanceWebSocketHandler.Handle)
 
 	router.PathPrefix("/api/1/binance/proxy").Handler(binance.NewApiProxy())
@@ -75,7 +83,7 @@ func ServerMain(options Options) {
 	router.HandleFunc("/api/1/ping", pingHandler)
 	router.HandleFunc("/api/1/status/websockets", webSocketsStatusHandler)
 
-	router.Handle("/api/1/binance/volume", NewVolumeHandler(binanceFeed))
+	router.Handle("/api/1/binance/volume", NewVolumeHandler(binanceRunner))
 
 	static := packr.NewBox("../../webapp/dist")
 	staticServer := http.FileServer(static)
