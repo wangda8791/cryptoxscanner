@@ -505,7 +505,7 @@ export class BinanceMonitorComponent implements OnInit, OnDestroy, AfterViewInit
                 const audio = new Audio();
                 audio.src = "../../../assets/sonar.ogg";
                 audio.load();
-                audio.play();
+                audio.play().then(() => {}).catch(() => {});
             } catch (err) {
             }
         }
