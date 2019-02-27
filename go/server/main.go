@@ -34,6 +34,7 @@ import (
 	"gitlab.com/crankykernel/cryptoxscanner/binance"
 	"gitlab.com/crankykernel/cryptoxscanner/log"
 	"gitlab.com/crankykernel/cryptoxscanner/version"
+	"math"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -135,6 +136,12 @@ func (h *VolumeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ticker["t60pb"] = float64(tracker.Metrics[60].BuyTrades) / float64(tracker.Metrics[60].TotalTrades)
 		} else {
 			ticker["t60pb"] = float64(0)
+		}
+
+		if math.IsNaN(tracker.Metrics[15].RSI) {
+			ticker["rsi15"] = 0
+		} else {
+			ticker["rsi15"] = tracker.Metrics[15].RSI
 		}
 
 		ticker["t60"] = tracker.Metrics[60].TotalTrades

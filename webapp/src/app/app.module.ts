@@ -41,7 +41,7 @@ import {DoubleScrollModule} from 'mindgaze-doublescroll';
 import {BaseassetPipe} from './baseasset.pipe';
 import {ExchangesymbolPipe} from './exchangesymbol.pipe';
 import {HodlooLinkPipe} from './hodloo-link.pipe';
-import { BinanceVolumeComponent } from './binance-volume/binance-volume.component';
+import {BinanceNetvolumezComponent} from './binance-netvolumez/binance-netvolumez.component';
 import {BinanceNewvolumeComponent} from "./binance-newvolume/binance-newvolume.component";
 
 @Component({
@@ -92,9 +92,9 @@ const appRoutes: Routes = [
     },
 
     {
-        path: "binance/volume",
+        path: "binance/netvolumez",
         pathMatch: "prefix",
-        component: BinanceVolumeComponent,
+        component: BinanceNetvolumezComponent,
     },
 
     {
@@ -136,7 +136,7 @@ const appRoutes: Routes = [
 
         KuCoinMonitorRedirectComponent,
         KuCoinLiveRedirectComponent,
-        BinanceVolumeComponent,
+        BinanceNetvolumezComponent,
         BinanceNewvolumeComponent,
     ],
     imports: [

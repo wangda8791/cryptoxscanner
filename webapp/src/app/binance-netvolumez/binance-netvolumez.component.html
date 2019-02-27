@@ -60,34 +60,6 @@
               >
             </div>
           </li>
-          <!--<li class="nav-item mr-2">-->
-          <!--<div class="input-group input-group">-->
-          <!--<div class="input-group-prepend">-->
-          <!--<span class="input-group-text"-->
-          <!--data-toggle="tooltip" data-placement="left"-->
-          <!--title="Percent buy volume must increase to be considered a ping."-->
-          <!--&gt;Buy Volume %+</span>-->
-          <!--</div>-->
-          <!--<input type="number" class="form-control" style="width: 90px;" min="0"-->
-          <!--(change)="refresh()"-->
-          <!--[(ngModel)]="pingBuyVolumeChange"-->
-          <!--&gt;-->
-          <!--</div>-->
-          <!--</li>-->
-          <!--<li class="nav-item">-->
-          <!--<div class="input-group input-group">-->
-          <!--<div class="input-group-prepend">-->
-          <!--<span class="input-group-text"-->
-          <!--data-toggle="tooltip" data-placement="left"-->
-          <!--title="The time interval a ping is calculated over in minutes."-->
-          <!--&gt;Interval</span>-->
-          <!--</div>-->
-          <!--<select class="form-control" name="updateInterval"-->
-          <!--[(ngModel)]="interval" (change)="refresh();">-->
-          <!--<option *ngFor="let av of availableIntervals">{{av}}</option>-->
-          <!--</select>-->
-          <!--</div>-->
-          <!--</li>-->
         </ul>
       </nav>
 
@@ -100,6 +72,7 @@
             <th>24h Volume</th>
             <th>1h Volume</th>
             <th>1h Net Volume</th>
+            <th>15m RSI</th>
           </tr>
           <tr *ngFor="let row of tickers">
             <td>{{row.timestamp | date:"medium"}}</td>
@@ -112,6 +85,7 @@
             <td>{{row.volume | number:".3-3"}}</td>
             <td>{{row.v60 | number:".3-3"}}</td>
             <td>{{row.nv60 | number:".3-3"}}</td>
+            <td>{{row.rsi15 | number:".3-3"}}</td>
           </tr>
         </table>
       </div>

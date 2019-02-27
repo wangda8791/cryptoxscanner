@@ -4,11 +4,10 @@ import {HttpClient} from "@angular/common/http";
 import * as $ from "jquery";
 
 @Component({
-    selector: 'app-binance-volume',
-    templateUrl: './binance-volume.component.html',
-    styleUrls: ['./binance-volume.component.scss']
+    templateUrl: './binance-netvolumez.component.html',
+    styleUrls: ['./binance-netvolumez.component.scss']
 })
-export class BinanceVolumeComponent implements OnInit {
+export class BinanceNetvolumezComponent implements OnInit {
 
     tickers: any[] = [];
 
@@ -94,6 +93,7 @@ export class BinanceVolumeComponent implements OnInit {
                             volume: ticker.vol,
                             nv60: ticker.nv60,
                             v60: ticker.v60,
+                            rsi15: ticker.rsi15,
                         });
                     }
 
