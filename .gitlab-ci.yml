@@ -20,7 +20,7 @@ build:
     mv dist/*.zip .
 
     docker tag crankykernel/cryptoxscanner:builder ${CONTAINER_IMAGE}
-    docker push ${CONTAINER_IMAGE}
+    #docker push ${CONTAINER_IMAGE}
   artifacts:
     paths:
       - "*.zip"
