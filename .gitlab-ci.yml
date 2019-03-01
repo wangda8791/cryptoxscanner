@@ -15,11 +15,11 @@ build:
     apk add git
     git checkout ${CI_COMMIT_REF_NAME}
 
-    ./build/build.sh
+    ./build/build.sh dist
 
     mv dist/*.zip .
 
-    docker tag crankykernel/maker:builder ${CONTAINER_IMAGE}
+    docker tag crankykernel/cryptoxscanner:builder ${CONTAINER_IMAGE}
     docker push ${CONTAINER_IMAGE}
   artifacts:
     paths:
