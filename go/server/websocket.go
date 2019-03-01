@@ -153,10 +153,10 @@ func (h *TickerWebSocketHandler) Upgrade(w http.ResponseWriter, r *http.Request)
 func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	client, err := h.Upgrade(w, r)
 	if err != nil {
-		log.Printf("Failed to upgrade websocket connection: %v\n", err)
+		log.Infof("Failed to upgrade websocket connection: %v", err)
 		return
 	}
-	log.Printf("WebSocket connnected to %s: RemoteAddr=%v; Origin=%s\n",
+	log.Infof("WebSocket connnected to %s: RemoteAddr=%v; Origin=%s",
 		r.URL.String(),
 		client.GetRemoteAddr(),
 		r.Header.Get("origin"))
@@ -183,12 +183,12 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 			case filteredMessage := <-channel:
 				bytes, err := json.Marshal(filteredMessage)
 				if err != nil {
-					log.Printf("failed to marshal filtered ticker: %v\n", err)
+					log.Infof("failed to marshal filtered ticker: %v", err)
 					continue
 				}
 
 				if err := client.WriteTextMessage(bytes); err != nil {
-					log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
+					log.Info("error: websocket write error to %s: %v", client.GetRemoteAddr(), err)
 					goto Done
 				}
 			case <-client.closeChannel:
@@ -219,7 +219,7 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	}
 Done:
 	client.conn.Close()
-	log.Printf("WebSocket connection closed: %v\n", client.GetRemoteAddr())
+	log.Infof("WebSocket connection closed: %v", client.GetRemoteAddr())
 }
 
 func (h *TickerWebSocketHandler) readLoop(client *WebSocketClient) {
