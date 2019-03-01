@@ -28,3 +28,13 @@ clean:
 distclean: clean
 	cd go && $(MAKE) $@
 	cd webapp && $(MAKE) $@
+
+dist: GOOS=$(shell go env GOOS)
+dist: GOARCH=$(shell go env GOARCH)
+dist: DIR = $(APP)-$(VERSION)-$(GOOS)-$(GOARCH)
+dist:
+	rm -rf dist/$(DIR) && mkdir -p dist/$(DIR)
+	test "${SKIP_WEBAPP}" || (cd webapp && $(MAKE))
+	cd go && $(MAKE) DIR=../dist/$(DIR)
+	cp README.md LICENSE.txt dist/$(DIR)/
+	cd dist && zip -r $(DIR).zip $(DIR)
