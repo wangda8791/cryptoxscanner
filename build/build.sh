@@ -1,5 +1,7 @@
 #! /bin/sh
 
+TAG="crankykernel/cryptoxscanner:builder"
+
 # Do we have a tty?
 docker_it=""
 if [ -t 1 ] ; then
@@ -7,7 +9,7 @@ if [ -t 1 ] ; then
 fi
 
 prep() {
-    docker build -t cryptoxscanner-builder -f build/Dockerfile .
+    docker build -t ${TAG} -f build/Dockerfile .
     mkdir -p .docker_cache
 }
 
@@ -20,7 +22,7 @@ case "$1" in
 	       -v `pwd`/.docker_cache/go:/home/builder/go \
 	       -w /src \
 	       -e REAL_UID=`id -u` -e REAL_GID=`id -g` \
-	       cryptoxscanner-builder "make install-deps dist"
+	       ${TAG} "make install-deps dist"
 	;;
 
     *)
@@ -31,6 +33,6 @@ case "$1" in
 	       -v `pwd`/.docker_cache/go:/home/builder/go \
 	       -w /src \
 	       -e REAL_UID=`id -u` -e REAL_GID=`id -g` \
-	       cryptoxscanner-builder "make install-deps build"
+	       ${TAG} "make install-deps build"
 	;;
 esac
