@@ -30,7 +30,7 @@ distclean: clean
 	cd webapp && $(MAKE) $@
 
 docker-build:
-	docker build -t cryptoxscanner-builder -f build/Dockerfile.build .
+	docker build -t cryptoxscanner-builder -f build/Dockerfile .
 	mkdir -p .docker_cache
 	docker run --rm -it \
 		-v `pwd`:/src \
@@ -39,6 +39,28 @@ docker-build:
 		-w /src \
 		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 		cryptoxscanner-builder make install-deps build
+
+docker-build-windows:
+	docker build -t cryptoxscanner-builder -f build/Dockerfile .
+	mkdir -p .docker_cache
+	docker run --rm -it \
+		-v `pwd`:/src \
+		-v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
+		-v `pwd`/.docker_cache/go:/home/builder/go \
+		-w /src \
+		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
+		cryptoxscanner-builder "GOOS=windows make install-deps build"
+
+docker-dist:
+	docker build -t cryptoxscanner-builder -f build/Dockerfile .
+	mkdir -p .docker_cache
+	docker run --rm -it \
+		-v `pwd`:/src \
+		-v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
+		-v `pwd`/.docker_cache/go:/home/builder/go \
+		-w /src \
+		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
+		cryptoxscanner-builder "make install-deps dist"
 
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)

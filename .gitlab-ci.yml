@@ -1,31 +1,26 @@
-image: centos:7
-
-before_script:
-  # Install required system packages.
-  - yum -y install epel-release
-  - |
-    yum -y install \
-        git \
-        make \
-        zip \
-        gcc \
-        mingw32-gcc
-
 build:
+  image: docker:stable
+  variables:
+    CONTAINER_IMAGE: registry.gitlab.com/$CI_PROJECT_PATH:latest
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:dind
   script: |
-    export GO_VERSION=1.11.4
-    curl -L https://dl.google.com/go/go1.11.2.linux-amd64.tar.gz | (cd /usr/local && tar zxf -)
+    docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+    docker pull ${CONTAINER_IMAGE} || true
 
-    export NODE_VERSION=10.15.0
-    (cd /usr/local && curl -o - -L https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz | tar zxf - --strip-components=1)
-    
-    export PATH=/usr/local/go/bin:$PATH
-    make install-deps
-    CC=gcc GOOS=linux GOARCH=amd64 make dist
-    CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 SKIP_WEBAPP=1 make dist
+    export CACHE_FROM="--cache-from ${CONTAINER_IMAGE}"
 
-    cp dist/*.zip ${CI_PROJECT_DIR}
+    apk add git
+    git checkout ${CI_COMMIT_REF_NAME}
 
+    make docker-dist
+
+    mv dist/*.zip .
+
+    docker tag crankykernel/maker:builder ${CONTAINER_IMAGE}
+    docker push ${CONTAINER_IMAGE}
   artifacts:
     paths:
       - "*.zip"
