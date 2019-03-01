@@ -89,20 +89,14 @@ type WebSocketClient struct {
 	r *http.Request
 
 	// Data written into this Channel will be sent to the client.
-	sendChannel chan *websocket.PreparedMessage
-
-	blocks int
-
-	done bool
+	closeChannel chan bool
 }
 
 func NewWebSocketClient(c *websocket.Conn, r *http.Request) *WebSocketClient {
 	return &WebSocketClient{
-		conn:        c,
-		sendChannel: make(chan *websocket.PreparedMessage),
-		r:           r,
-		blocks:      0,
-		done:        false,
+		conn:         c,
+		closeChannel: make(chan bool),
+		r:            r,
 	}
 }
 
@@ -185,9 +179,6 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		channel := h.binanceRunner.SubscribeSymbol(symbol)
 		defer h.binanceRunner.UnsubscribeSymbol(symbol, channel)
 		for {
-			if client.done {
-				break
-			}
 			select {
 			case filteredMessage := <-channel:
 				bytes, err := json.Marshal(filteredMessage)
@@ -200,24 +191,19 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 					log.Printf("error: websocket write error to %s: %v\n", client.GetRemoteAddr(), err)
 					goto Done
 				}
-			case msg := <-client.sendChannel:
-				if msg == nil {
-					goto Done
-				}
-				// Discard.
+			case <-client.closeChannel:
+				goto Done
 			}
 		}
 	} else {
-		var channel chan *websocket.PreparedMessage
-		channel = h.source.Subscribe()
+		channel := h.source.Subscribe()
 		defer h.source.Unsubscribe(channel)
 		for {
-			if client.done {
-				break
-			}
-
 			select {
 			case trackers := <-channel:
+				if trackers == nil {
+					goto Done
+				}
 				if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
 					continue
 				}
@@ -226,11 +212,13 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 					goto Done
 				}
 				lastUpdate = time.Now()
+			case <-client.closeChannel:
+				goto Done
 			}
 		}
 	}
 Done:
-	client.done = true
+	client.conn.Close()
 	log.Printf("WebSocket connection closed: %v\n", client.GetRemoteAddr())
 }
 
@@ -240,8 +228,7 @@ func (h *TickerWebSocketHandler) readLoop(client *WebSocketClient) {
 			break
 		}
 	}
-	client.sendChannel <- nil
-	client.done = true
+	client.closeChannel <- true
 }
 
 type TickerStream struct {
@@ -287,12 +274,17 @@ func (f *WsSourceCache) Run() {
 			log.Errorf("Failed to prepare monitor websocket message: %v", err)
 			continue
 		}
+		closeList := []chan *websocket.PreparedMessage{}
 		for subscriber := range f.subscribers {
 			select {
 			case subscriber <- pm:
 			default:
-				log.Warnf("Failed to send cached monitor message to subscriber: would block")
+				closeList = append(closeList, subscriber)
 			}
+		}
+		for _, channel := range closeList {
+			close(channel)
+			f.Unsubscribe(channel)
 		}
 	}
 }
