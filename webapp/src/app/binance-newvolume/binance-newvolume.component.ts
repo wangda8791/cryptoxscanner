@@ -98,6 +98,10 @@ export class BinanceNewvolumeComponent implements OnInit {
 
                     const ticker = response.data[key];
 
+                    if (!ticker["nvh"]) {
+                        continue;
+                    }
+
                     if (ticker.vol < +this.min24HourVolume) {
                         continue;
                     }
