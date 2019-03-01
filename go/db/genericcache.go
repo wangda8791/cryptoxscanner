@@ -138,7 +138,7 @@ func (c *GenericCache) AddItem(timestamp time.Time, itemType string, body []byte
 			"duration": time.Now().Sub(start),
 			"cache":    c.name,
 			"deleted":  n,
-		}).Infof("Committed %d items.", c.itemCount)
+		}).Debugf("Committed %d items.", c.itemCount)
 		c.tx = nil
 		c.itemCount = 0
 		c.lastCommit = time.Now()
