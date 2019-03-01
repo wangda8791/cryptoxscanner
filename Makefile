@@ -1,6 +1,6 @@
 APP :=		cryptoxscanner
 ifndef VERSION
-VERSION :=	0.1.0dev$(shell date +%s)
+VERSION :=	0.1.0dev$(shell date +%Y%m%d%H%M%S)
 endif
 
 .PHONY:		build dist
@@ -28,17 +28,6 @@ clean:
 distclean: clean
 	cd go && $(MAKE) $@
 	cd webapp && $(MAKE) $@
-
-docker-build:
-	docker build -t cryptoxscanner-builder -f build/Dockerfile.build .
-	mkdir -p .docker_cache
-	docker run --rm -it \
-		-v `pwd`:/src \
-		-v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
-		-v `pwd`/.docker_cache/go:/home/builder/go \
-		-w /src \
-		-e REAL_UID=`id -u` -e REAL_GID=`id -g` \
-		cryptoxscanner-builder make install-deps build
 
 dist: GOOS=$(shell go env GOOS)
 dist: GOARCH=$(shell go env GOARCH)
