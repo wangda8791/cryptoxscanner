@@ -326,9 +326,9 @@
             </td>
             <td *ngIf="visibleColumns.length == 0" style="border: 0;">&nbsp;</td>
             <td *ngFor="let col of visibleColumns"
-                [ngStyle]="{'background': ticker[col.name].background_color}"
+                [ngStyle]="{'background': ticker[col.name] ? ticker[col.name].background_color : ''}"
             >
-              <span [ngSwitch]="col.type"
+              <span *ngIf="ticker[col.name]" [ngSwitch]="col.type"
                     [ngClass]="{'up': col.updown && ticker[col.name].value > 0,
                             'down': col.updown && ticker[col.name].value < 0}">
                 <span *ngSwitchCase="'percent'"
