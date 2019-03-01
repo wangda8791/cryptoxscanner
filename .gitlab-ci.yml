@@ -15,7 +15,7 @@ build:
     apk add git
     git checkout ${CI_COMMIT_REF_NAME}
 
-    make docker-dist
+    ./build/build.sh
 
     mv dist/*.zip .
 
