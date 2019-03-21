@@ -294,13 +294,18 @@ func WsBuildCompleteMessage(trackers *TickerTrackerMap) []interface{} {
 	for key := range trackers.Trackers {
 		tracker := trackers.Trackers[key]
 		m := WsBuildCompleteEntry(tracker)
-		entries = append(entries, m)
+		if m != nil {
+			entries = append(entries, m)
+		}
 	}
 	return entries
 }
 
 func WsBuildCompleteEntry(tracker *TickerTracker) map[string]interface{} {
 	last := tracker.LastTick()
+	if last == nil {
+		return nil
+	}
 	key := tracker.Symbol
 
 	message := map[string]interface{}{
@@ -382,6 +387,9 @@ func WsBuildMonitorMessage(trackers *TickerTrackerMap) []interface{} {
 	for key := range trackers.Trackers {
 		tracker := trackers.Trackers[key]
 		last := tracker.LastTick()
+		if last == nil {
+			continue
+		}
 		key := tracker.Symbol
 
 		entry := map[string]interface{}{
