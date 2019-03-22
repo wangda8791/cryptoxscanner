@@ -219,7 +219,16 @@ func (b *TradeStream) GetSymbols() ([]string, error) {
 	}
 	symbols := []string{}
 	for _, price := range prices {
-		symbols = append(symbols, strings.ToLower(price.Symbol))
+		lower := strings.ToLower(price.Symbol)
+		switch {
+		case strings.HasSuffix(lower, "btc"):
+		case strings.HasSuffix(lower, "eth"):
+		case strings.HasSuffix(lower, "bnb"):
+		case strings.HasSuffix(lower, "usdt"):
+		default:
+			continue
+		}
+		symbols = append(symbols, lower)
 	}
 	return symbols, nil
 }

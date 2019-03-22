@@ -207,8 +207,11 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 				if time.Now().Sub(lastUpdate) < time.Second*time.Duration(updateInterval) {
 					continue
 				}
+				if err := client.conn.SetWriteDeadline(time.Now().Add(time.Second * 6)); err != nil {
+					log.WithError(err).Warnf("Failed to send websocket write deadline")
+				}
 				if err := client.conn.WritePreparedMessage(trackers); err != nil {
-					log.Errorf("error: websocket write of prepared message: %v", err)
+					log.WithError(err).Errorf("Failed to write websocket prepared message")
 					goto Done
 				}
 				lastUpdate = time.Now()
@@ -274,17 +277,11 @@ func (f *WsSourceCache) Run() {
 			log.Errorf("Failed to prepare monitor websocket message: %v", err)
 			continue
 		}
-		closeList := []chan *websocket.PreparedMessage{}
 		for subscriber := range f.subscribers {
 			select {
 			case subscriber <- pm:
 			default:
-				closeList = append(closeList, subscriber)
 			}
-		}
-		for _, channel := range closeList {
-			close(channel)
-			f.Unsubscribe(channel)
 		}
 	}
 }
