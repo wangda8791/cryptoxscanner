@@ -36,8 +36,8 @@ import (
 type BinanceRunner struct {
 	trackers          *TickerTrackerMap
 	symbolSubscribers map[string]map[chan interface{}]bool
-	subscribers       map[chan *TickerTrackerMap]bool
-	tickerStream      *binance.TickerStream
+	subscribers  map[chan *TickerTrackerMap]bool
+	tickerStream *binance.TickerStream
 
 	Cached    TickerTrackerMap
 	CacheLock sync.RWMutex
@@ -162,7 +162,10 @@ func (b *BinanceRunner) Run() {
 					}
 					message := WsBuildCompleteEntry(b.trackers.Trackers[key])
 					for subscriber := range b.symbolSubscribers[key] {
-						subscriber <- message
+						select {
+						case subscriber <- message:
+						default:
+						}
 					}
 				}
 

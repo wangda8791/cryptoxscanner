@@ -95,7 +95,7 @@ type WebSocketClient struct {
 func NewWebSocketClient(c *websocket.Conn, r *http.Request) *WebSocketClient {
 	return &WebSocketClient{
 		conn:         c,
-		closeChannel: make(chan bool),
+		closeChannel: make(chan bool, 1),
 		r:            r,
 	}
 }
@@ -222,6 +222,7 @@ func (h *TickerWebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	}
 Done:
 	client.conn.Close()
+	close(client.closeChannel)
 	log.Infof("WebSocket connection closed: %v", client.GetRemoteAddr())
 }
 
@@ -231,7 +232,10 @@ func (h *TickerWebSocketHandler) readLoop(client *WebSocketClient) {
 			break
 		}
 	}
-	client.closeChannel <- true
+	select {
+	case client.closeChannel <- true:
+	default:
+	}
 }
 
 type TickerStream struct {
