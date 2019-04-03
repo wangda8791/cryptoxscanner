@@ -23,7 +23,7 @@ RUN make
 
 FROM centos:7
 WORKDIR /app
-COPY --from=0 /src/cryptoxscanner .
+COPY --from=0 /src/go/cryptoxscanner .
 WORKDIR /data
 
 VOLUME /data
