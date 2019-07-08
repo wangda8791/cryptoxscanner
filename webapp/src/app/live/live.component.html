@@ -307,6 +307,7 @@
                 [name]="header.name" [sortBy]="config.sortBy"
                 [sortOrder]="config.sortOrder"
                 [ngStyle]="{'background': header.name == config.sortBy ? 'gainsboro' : ''}"
+                [title]="header.tooltip ? header.tooltip : header.title"
             >
               {{header.title}}
             </th>

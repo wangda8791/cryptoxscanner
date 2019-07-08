@@ -65,6 +65,7 @@ interface ColumnConfig {
     routerLink?: string;
     fn?: any;
     updown?: boolean;
+    tooltip?: string;
 }
 
 @Component({
@@ -168,6 +169,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".8",
                 display: true,
+                tooltip: "Last price",
             },
             {
                 title: "Bid",
@@ -209,6 +211,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 name: "price_change_pct_24h",
                 type: "percent-number",
                 display: true,
+                tooltip: "24 hour price change",
             },
             {
                 title: "24h Vol",
@@ -222,72 +225,84 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 name: "price_change_pct_1m",
                 type: "percent-number",
                 display: true,
+                tooltip: "1 minute price change",
             },
             {
                 title: "5m %",
                 name: "price_change_pct_5m",
                 type: "percent-number",
                 display: true,
+                tooltip: "5 minute price change",
             },
             {
                 title: "10m %",
                 name: "price_change_pct_10m",
                 type: "percent-number",
                 display: true,
+                tooltip: "10 minute price change",
             },
             {
                 title: "15m %",
                 name: "price_change_pct_15m",
                 type: "percent-number",
                 display: true,
+                tooltip: "15 minute price change",
             },
             {
                 title: "60m %",
                 name: "price_change_pct_1h",
                 type: "percent-number",
                 display: true,
+                tooltip: "60 minute price change",
             },
             {
                 title: "1m Vol %",
                 name: "volume_change_pct_1m",
                 type: "percent-number",
                 display: true,
+                tooltip: "1 minute volume change",
             },
             {
                 title: "2m Vol %",
                 name: "volume_change_pct_2m",
                 type: "percent-number",
                 display: true,
+                tooltip: "2 minute volume change",
             },
             {
                 title: "3m Vol %",
                 name: "volume_change_pct_3m",
                 type: "percent-number",
                 display: true,
+                tooltip: "3 minute volume change",
             },
             {
                 title: "5m Vol %",
                 name: "volume_change_pct_5m",
                 type: "percent-number",
                 display: true,
+                tooltip: "5 minute volume change",
             },
             {
                 title: "10m Vol %",
                 name: "volume_change_pct_10m",
                 type: "percent-number",
                 display: true,
+                tooltip: "10 minute volume change",
             },
             {
                 title: "15m Vol %",
                 name: "volume_change_pct_15m",
                 type: "percent-number",
                 display: true,
+                tooltip: "15 minute volume change",
             },
             {
                 title: "60m Vol %",
                 name: "volume_change_pct_1h",
                 type: "percent-number",
                 display: true,
+                tooltip: "60 minute volume change",
             },
         ];
 
@@ -298,6 +313,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".8-8",
                 display: false,
+                tooltip: `${i} minute low`,
             });
             this.columns.push({
                 title: `${i}mH`,
@@ -305,12 +321,14 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".8-8",
                 display: false,
+                tooltip: `${i} minute high`,
             });
             this.columns.push({
                 title: `${i}mR%`,
                 name: `rp_${i}`,
                 type: "percent-number",
                 display: true,
+                tooltip: `${i} minute range`,
             });
         }
 
@@ -322,6 +340,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "1 minute net volume",
             },
             {
                 title: "2mNV",
@@ -330,6 +349,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "2 minute net volume",
             },
             {
                 title: "3mNV",
@@ -338,14 +358,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
-            },
-            {
-                title: "4mNV",
-                name: "nv_4",
-                type: "number",
-                format: ".2-2",
-                display: true,
-                updown: true,
+                tooltip: "3 minute net volume",
             },
             {
                 title: "5mNV",
@@ -354,6 +367,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "5 minute net volume",
             },
             {
                 title: "10mNV",
@@ -362,6 +376,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "10 minute net volume",
             },
             {
                 title: "15mNV",
@@ -370,6 +385,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "15 minute net volume",
             },
             {
                 title: "60mNV",
@@ -378,6 +394,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 format: ".2-2",
                 display: true,
                 updown: true,
+                tooltip: "60 minute net volume",
             },
             {
                 title: "1m Vol",
@@ -385,6 +402,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "1 minute volume",
             },
             {
                 title: "5m Vol",
@@ -392,6 +410,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "5 minute volume",
             },
             {
                 title: "10m Vol",
@@ -399,6 +418,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "10 minute volume",
             },
             {
                 title: "15m Vol",
@@ -406,6 +426,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "15 minute volume",
             },
             {
                 title: "60m Vol",
@@ -413,6 +434,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "60 minute volume",
             },
             {
                 title: "RSI 1m",
@@ -420,6 +442,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "1 minute RSI",
             },
             {
                 title: "RSI 3m",
@@ -427,6 +450,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "3 minute RSI",
             },
             {
                 title: "RSI 5m",
@@ -434,6 +458,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "5 minute RSI",
             },
             {
                 title: "RSI 15m",
@@ -441,6 +466,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: "15 minute RSI",
             }
         ]);
 
@@ -452,6 +478,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: `${r} minute buy volume`,
             };
             this.columns.push(entry);
         }
@@ -464,6 +491,7 @@ export class BinanceLiveComponent implements OnInit, OnDestroy {
                 type: "number",
                 format: ".2-2",
                 display: true,
+                tooltip: `${r} minute sell volume`,
             };
             this.columns.push(entry);
         }
