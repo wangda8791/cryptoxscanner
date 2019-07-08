@@ -18,8 +18,6 @@ case "$1" in
 	prep
 	docker run --rm ${docker_it} \
 	       -v `pwd`:/src \
-	       -v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
-	       -v `pwd`/.docker_cache/go:/home/builder/go \
 	       -w /src \
 	       -e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 	       ${TAG} "make install-deps dist"
@@ -29,8 +27,6 @@ case "$1" in
 	prep
 	docker run --rm ${docker_it} \
 	       -v `pwd`:/src \
-	       -v `pwd`/.docker_cache/node_modules:/src/webapp/node_modules \
-	       -v `pwd`/.docker_cache/go:/home/builder/go \
 	       -w /src \
 	       -e REAL_UID=`id -u` -e REAL_GID=`id -g` \
 	       ${TAG} "make install-deps build"
