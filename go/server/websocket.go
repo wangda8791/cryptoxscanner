@@ -351,7 +351,11 @@ func WsBuildCompleteEntry(tracker *TickerTracker) map[string]interface{} {
 	}
 
 	message["r_24"] = tracker.H24Metrics.Range
-	message["rp_24"] = tracker.H24Metrics.RangePercent
+	if math.IsNaN(tracker.H24Metrics.RangePercent) {
+		message["rp_24"] = 0
+	} else {
+		message["rp_24"] = tracker.H24Metrics.RangePercent
+	}
 
 	if tracker.HaveVwap {
 		for i, k := range tracker.Metrics {
