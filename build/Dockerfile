@@ -19,7 +19,7 @@ RUN cd /usr/local && \
 	curl -L -o - https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz | tar zxf - --strip-components=1
 
 
-ENV GO_VERSION 1.11.4
+ENV GO_VERSION 1.12.6
 RUN cd /usr/local && \
 	curl -L -o - https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz | tar zxf -
 
